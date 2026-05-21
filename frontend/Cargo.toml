@@ -1,0 +1,35 @@
+[package]
+name = "knowledge-base-frontend"
+version = "0.3.0"
+edition = "2021"
+authors = ["Jeffery D. Mitchell", "<crusty.rustacean@gmail.com>"]
+description = "Yew frontend for knowledge-base"
+license = "MIT"
+publish = false
+
+[dependencies]
+yew = { version = "0.23", features = ["csr"] }
+gloo-net = { version = "0.6", features = ["http", "json"] }
+wasm-bindgen-futures = "0.4"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+knowledge-base-shared = { path = "../shared" }
+web-sys = { version = "0.3", features = [
+  "console",
+  "Headers",
+  "Request",
+  "RequestInit",
+  "RequestMode",
+  "Response",
+  "Window",
+  "HtmlInputElement",
+  "HtmlTextAreaElement",
+  "InputEvent",
+  "SubmitEvent",
+] }
+wasm-bindgen = "0.2"
+gloo-utils = { version = "0.2", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde", "js"] }
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3"

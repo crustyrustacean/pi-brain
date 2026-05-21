@@ -1,0 +1,25 @@
+[package]
+name = "knowledge-base-shared"
+version = "0.3.0"
+edition = "2021"
+authors = ["Jeffery D. Mitchell", "<crusty.rustacean@gmail.com>"]
+description = "Shared types and models for knowledge-base"
+license = "MIT"
+publish = false
+
+[features]
+backend = ["actix-web", "tracing"]
+
+[dependencies]
+chrono = { version = "0.4.44", default-features = false, features = ["clock", "serde"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[dependencies.actix-web]
+version = "4.13.0"
+optional = true
+
+[dependencies.tracing]
+version = "0.1.19"
+optional = true

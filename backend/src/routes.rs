@@ -1,0 +1,13 @@
+// src/routes.rs
+
+// module declarations
+pub mod documents;
+pub mod health_check;
+pub mod search;
+pub mod stats;
+
+// re-exports
+pub use documents::*;
+pub use health_check::*;
+pub use search::*;
+pub use stats::*;
