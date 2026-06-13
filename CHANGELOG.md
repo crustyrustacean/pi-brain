@@ -1,6 +1,24 @@
 # Changelog
 
-All notable changes to the Actix Web Starter project will be documented in this file.
+All notable changes to pi-brain will be documented in this file.
+
+## [0.4.0] - 2026-06-13
+
+### Frontend deployment
+
+- **Frontend now serves at root URL (`/`)** — the SPA is accessible at `http://host:8000/` alongside the API at `/kb/*`
+- **Switched build pipeline from `wasm-pack --dev` to `trunk build --release`** — proper WASM optimizations (wasm-opt -Oz), minified JS, content-hashed output files, no dev HReload injected
+- **Fixed static file path** — backend now correctly resolves `../frontend/dist` relative to its working directory
+- **Fixed stray `#[cfg(feature = "backend")]` on shared types** — `Document` and other types are now available to both frontend and backend
+
+### Backend
+
+- **Added `frontend/` to systemd `ReadWritePaths`** — required under `ProtectSystem=strict` to serve static files
+
+### Documentation
+
+- **Rewrote README.md** — project overview, architecture, API reference, build/run instructions, configuration, frontend dev workflow, systemd setup, database schema
+- **Updated build scripts** — fixed stale binary name reference, reliable `SCRIPT_DIR`, proper exit hints
 
 ## [0.3.0] - 2026-05-20
 

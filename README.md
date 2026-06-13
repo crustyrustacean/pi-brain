@@ -1,3 +1,155 @@
-# Actix Web Starter
+# pi-brain
 
-An opinionated starting project for a backend API using [Actix Web](https://actix.rs).
+A local knowledge base for AI coding agents. Persistent, searchable, accessible via REST API and a web UI.
+
+## Overview
+
+pi-brain gives AI assistants long-term memory. Documents are stored in a local SQLite database with full-text search, deduplicated content, and soft deletes. The backend exposes a REST API designed for programmatic access by tools and agents, while the frontend provides a human-friendly interface for browsing and managing stored knowledge.
+
+## Architecture
+
+```
+pi-brain/
+├── backend/          Actix Web REST API (Rust)
+├── frontend/        Yew WASM SPA (Rust → WebAssembly)
+├── shared/           Shared types crate (Rust)
+└── configuration/    YAML config (base + environment overlays)
+```
+
+- **Backend** — Actix Web 4 with SQLite (via sqlx), FTS5 full-text search, structured JSON logging, and layered YAML configuration
+- **Frontend** — Yew 0.23 compiled to WebAssembly via Trunk. Document CRUD, search, and stats dashboard
+- **Shared** — Common request/response types ensuring type-safe consistency between frontend and backend
+
+## API
+
+All data endpoints are under `/kb/`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health_check` | Liveness probe |
+| POST | `/kb/documents` | Create a document |
+| GET | `/kb/documents` | List documents (paginated) |
+| GET | `/kb/documents/{id}` | Get a document by UUID |
+| PUT | `/kb/documents/{id}` | Update a document |
+| DELETE | `/kb/documents/{id}` | Soft-delete a document |
+| POST | `/kb/search` | Full-text search (body) |
+| GET | `/kb/search?q=` | Full-text search (query params) |
+| GET | `/kb/stats` | Knowledge base statistics |
+| GET | `/kb/endpoints` | API discovery (machine-readable) |
+
+All responses use a consistent JSON envelope:
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": null
+}
+```
+
+## Prerequisites
+
+- Rust 1.85+ (edition 2024)
+- [Trunk](https://trunkrs.dev/) (`cargo install --locked trunk`)
+- wasm32 target (`rustup target add wasm32-unknown-unknown`)
+
+## Build
+
+```bash
+# Build frontend (WASM) + backend (native)
+./build.sh
+```
+
+Or individually:
+
+```bash
+# Frontend only — outputs to frontend/dist/
+cd frontend && trunk build --release
+
+# Backend only
+cargo build --release
+```
+
+## Run
+
+```bash
+cargo run --release --bin pi-brain
+```
+
+The service listens on port 8000 by default:
+
+| URL | Serves |
+|-----|--------|
+| `http://localhost:8000/` | Frontend SPA |
+| `http://localhost:8000/kb/*` | REST API |
+
+## Configuration
+
+Configuration is layered from YAML files in `backend/configuration/`:
+
+- `base.yaml` — defaults (all environments)
+- `local.yaml` — local development overrides
+- `production.yaml` — production overrides
+
+Environment selection via `APP_ENVIRONMENT` (defaults to `local`). All settings can also be overridden with environment variables prefixed with `APP_` and separated with `__` (e.g. `APP_APPLICATION__PORT=9000`).
+
+### Available settings
+
+```yaml
+application:
+  port: 8000
+  host: "0.0.0.0"
+  base_url: "http://localhost:8000"
+database:
+  path: "/home/user/.pi/agent/data/pi-brain.db"
+```
+
+## Frontend Development
+
+```bash
+cd frontend
+trunk serve          # Dev server with HMR at http://localhost:8080
+```
+
+Trunk proxies `/kb/*` requests to the backend at `http://localhost:8000` (see `Trunk.toml`).
+
+## systemd Service
+
+An example user service is provided for running pi-brain as a background daemon:
+
+```ini
+[Unit]
+Description=Pi Brain API (Actix Web)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/path/to/pi-brain/backend
+ExecStart=/path/to/pi-brain/target/release/pi-brain
+Restart=always
+RestartSec=5
+Environment=RUST_LOG=info
+Environment=APP_ENVIRONMENT=production
+
+[Install]
+WantedBy=default.target
+```
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now pi-brain
+```
+
+## Database
+
+SQLite with FTS5. Migrations run automatically on startup. The schema includes:
+
+- **`documents`** — UUID primary key, title, content, SHA-256 content hash (deduplication), tags (JSON), metadata (JSON), timestamps, soft-delete flag
+- **`documents_fts`** — FTS5 virtual table with auto-sync triggers for full-text search
+- **`document_links`** — Related document graph (planned)
+
+Default database path: `~/.pi/agent/data/pi-brain.db`
+
+## License
+
+[MIT](License.txt)

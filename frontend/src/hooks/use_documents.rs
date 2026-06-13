@@ -1,7 +1,7 @@
 // src/hooks/use_documents.rs
 
 use crate::api::{ApiClient, ApiError};
-use knowledge_base_shared::{CreateDocumentRequest, Document, UpdateDocumentRequest, DocumentListResponse, ApiResponse};
+use pi_brain_shared::{CreateDocumentRequest, Document, UpdateDocumentRequest, DocumentListResponse, ApiResponse};
 use yew::prelude::*;
 use std::sync::Arc;
 

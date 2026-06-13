@@ -2,7 +2,7 @@
 
 // dependencies
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::routes::{documents, health_check, search, stats};
+use crate::routes::{documents, endpoints, health_check, search, stats};
 use actix_files::Files;
 use actix_cors::Cors;
 use actix_web::dev::Server;
@@ -57,11 +57,7 @@ async fn run(listener: TcpListener, db_pool: SqlitePool, base_url: String) -> Re
     let base_url = Data::new(ApplicationBaseUrl(base_url));
     let db_pool = Data::new(db_pool);
     let server = HttpServer::new(move || {
-        let cors = Cors::default()
-            .allowed_origin("http://localhost:8080")
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-            .allowed_headers(vec!["Content-Type"])
-            .max_age(3600);
+        let cors = Cors::permissive();
 
         App::new()
             .wrap(cors)
@@ -75,7 +71,8 @@ async fn run(listener: TcpListener, db_pool: SqlitePool, base_url: String) -> Re
             .service(search::search_documents)
             .service(search::search_get)
             .service(stats::get_stats)
-            .service(Files::new("/static", "./frontend/dist").index_file("index.html"))
+            .route("/kb/endpoints", web::get().to(endpoints::get_endpoints))
+            .service(Files::new("/", "../frontend/dist").index_file("index.html"))
             .app_data(base_url.clone())
             .app_data(db_pool.clone())
     })

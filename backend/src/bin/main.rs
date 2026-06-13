@@ -1,13 +1,13 @@
 // src/main.rs
 
 // dependencies
-use knowledge_base::configuration::get_configuration;
-use knowledge_base::startup::Application;
-use knowledge_base::telemetry::{get_subscriber, init_subscriber};
+use pi_brain::configuration::get_configuration;
+use pi_brain::startup::Application;
+use pi_brain::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let subscriber = get_subscriber("knowledge-base".into(), "info".into(), std::io::stdout);
+    let subscriber = get_subscriber("pi-brain".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
     let configuration = get_configuration().expect("Failed to read configuration.");
     let application = Application::build(configuration.clone()).await?;

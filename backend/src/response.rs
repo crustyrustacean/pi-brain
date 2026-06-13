@@ -4,4 +4,4 @@
 // for ApiResponse is in the shared crate with the backend feature.
 // Keeping this file for any additional response handling that might be needed.
 
-pub use knowledge_base_shared::ApiResponse;
+pub use pi_brain_shared::ApiResponse;

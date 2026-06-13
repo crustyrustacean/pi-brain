@@ -1,6 +1,6 @@
 // src/models.rs
 
 // Re-export shared types
-pub use knowledge_base_shared::*;
+pub use pi_brain_shared::*;
 
 // Additional backend-specific types can be added here

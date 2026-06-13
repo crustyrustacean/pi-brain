@@ -1,22 +1,18 @@
 #!/bin/bash
 
-# Build script for the frontend
+# Build the frontend with trunk (production release)
 
 set -e
 
-echo "Building frontend with wasm-pack..."
+cd "$(dirname "$0")"
 
-# Install wasm-pack if not present
-if ! command -v wasm-pack &> /dev/null; then
-    echo "Installing wasm-pack..."
-    curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+if ! command -v trunk &> /dev/null; then
+    echo "Error: trunk is not installed."
+    echo "Install with: cargo install --locked trunk"
+    exit 1
 fi
 
-# Build the frontend
-cd "$(dirname "$0")"
-wasm-pack build --dev --target web --out-dir dist
-
-# Copy index.html to dist
-cp index.html dist/
+echo "Building frontend (release)..."
+trunk build --release
 
 echo "Frontend build complete!"

@@ -1,7 +1,7 @@
 // src/components/document_list.rs
 
 use yew::prelude::*;
-use knowledge_base_shared::Document;
+use pi_brain_shared::Document;
 use crate::hooks::use_modal::ModalType;
 
 #[derive(Properties, Clone)]

@@ -1,7 +1,7 @@
 // src/components/document_modal.rs
 
 use yew::prelude::*;
-use knowledge_base_shared::{Document, CreateDocumentRequest, UpdateDocumentRequest};
+use pi_brain_shared::{Document, CreateDocumentRequest, UpdateDocumentRequest};
 use crate::hooks::use_modal::ModalType;
 use crate::hooks::use_documents::UseDocumentsHandle;
 

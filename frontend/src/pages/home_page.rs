@@ -30,7 +30,7 @@ pub fn home_page() -> Html {
         let search_handle = search_handle.clone();
         
         Callback::from(move |query: String| {
-            let request = knowledge_base_shared::SearchRequest {
+            let request = pi_brain_shared::SearchRequest {
                 query: query.clone(),
                 tags: None,
                 limit: Some(50),
@@ -114,7 +114,7 @@ pub fn home_page() -> Html {
         <>
             <header>
                 <div class="container">
-                    <h1>{"Knowledge Base"}</h1>
+                    <h1>{"pi-brain"}</h1>
                 </div>
             </header>
             

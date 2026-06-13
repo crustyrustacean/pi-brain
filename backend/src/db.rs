@@ -4,6 +4,7 @@ use crate::error::ApiError;
 use crate::models::{Document, KnowledgeBaseStats};
 use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
+use hex;
 use sqlx::{SqlitePool, Row};
 use uuid::Uuid;
 
@@ -20,7 +21,7 @@ impl Database {
     fn compute_hash(content: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     /// Create a new document
@@ -203,15 +204,13 @@ impl Database {
         }
 
         // Add tag filtering
-        if let Some(tag_list) = tags {
-            if !tag_list.is_empty() {
+        if let Some(tag_list) = tags && !tag_list.is_empty() {
                 for tag in tag_list {
                     param_count += 1;
                     where_conditions.push(format!("d.tags LIKE ?{}", param_count));
                     bind_params.push(format!("%\"{}\"%", tag));
                 }
             }
-        }
 
         let where_clause = where_conditions.join(" AND ");
 

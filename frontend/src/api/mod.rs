@@ -1,7 +1,7 @@
 // src/api/mod.rs
 
 use gloo_net::http::Request;
-use knowledge_base_shared::*;
+use pi_brain_shared::*;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;

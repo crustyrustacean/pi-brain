@@ -1,7 +1,7 @@
 // src/hooks/use_stats.rs
 
 use crate::api::{ApiClient, ApiError};
-use knowledge_base_shared::{KnowledgeBaseStats, ApiResponse};
+use pi_brain_shared::{KnowledgeBaseStats, ApiResponse};
 use yew::prelude::*;
 use std::sync::Arc;
 

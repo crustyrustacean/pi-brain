@@ -1,4 +1,5 @@
 application:
   host: 0.0.0.0
 database:
+  path: "/home/jeff/.pi/agent/data/pi-brain.db"
   require_ssl: true

@@ -7,9 +7,6 @@ use uuid::Uuid;
 #[cfg(feature = "backend")]
 mod backend_impl;
 
-#[cfg(feature = "backend")]
-pub use backend_impl::*;
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Document {
     pub id: Uuid,

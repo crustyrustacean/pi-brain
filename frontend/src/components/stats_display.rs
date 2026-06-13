@@ -2,7 +2,7 @@
 
 use yew::prelude::*;
 use crate::hooks::use_stats;
-use knowledge_base_shared::KnowledgeBaseStats;
+use pi_brain_shared::KnowledgeBaseStats;
 
 #[derive(Properties, Clone)]
 pub struct StatsDisplayProps {

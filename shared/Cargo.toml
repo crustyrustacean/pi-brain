@@ -1,6 +1,6 @@
 [package]
-name = "knowledge-base-shared"
-version = "0.3.0"
+name = "pi-brain-shared"
+version = "0.4.0"
 edition = "2021"
 authors = ["Jeffery D. Mitchell", "<crusty.rustacean@gmail.com>"]
 description = "Shared types and models for knowledge-base"

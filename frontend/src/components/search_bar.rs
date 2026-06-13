@@ -2,7 +2,7 @@
 
 use yew::prelude::*;
 use crate::hooks::use_search;
-use knowledge_base_shared::SearchRequest;
+use pi_brain_shared::SearchRequest;
 
 #[derive(Properties, PartialEq)]
 pub struct SearchBarProps {

@@ -2,4 +2,4 @@ application:
   host: 127.0.0.1
   base_url: "http://127.0.0.1:8000"
 database:
-  path: "./knowledge-base.db"
+  path: "/home/jeff/.pi/agent/data/pi-brain.db"

@@ -1,7 +1,7 @@
 // src/hooks/use_search.rs
 
 use crate::api::{ApiClient, ApiError};
-use knowledge_base_shared::{SearchRequest, SearchResponse, ApiResponse};
+use pi_brain_shared::{SearchRequest, SearchResponse, ApiResponse};
 use yew::prelude::*;
 use std::sync::Arc;
 
