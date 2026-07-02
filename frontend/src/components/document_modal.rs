@@ -1,9 +1,9 @@
 // src/components/document_modal.rs
 
-use yew::prelude::*;
-use pi_brain_shared::{Document, CreateDocumentRequest, UpdateDocumentRequest};
-use crate::hooks::use_modal::ModalType;
 use crate::hooks::use_documents::UseDocumentsHandle;
+use crate::hooks::use_modal::ModalType;
+use pi_brain_shared::{CreateDocumentRequest, Document, UpdateDocumentRequest};
+use yew::prelude::*;
 
 #[derive(Properties, Clone)]
 pub struct DocumentModalProps {
@@ -24,17 +24,17 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
     let title = use_state(|| String::new());
     let content = use_state(|| String::new());
     let tags = use_state(|| String::new());
-    
+
     // Reset form when modal type changes
     let modal_type_for_closure = props.modal_type.clone();
     let current_document_for_effect = props.current_document.clone();
-    
+
     use_effect_with(props.modal_type.clone(), {
         let title = title.clone();
         let content = content.clone();
         let tags = tags.clone();
         let modal_type_for_closure = modal_type_for_closure.clone();
-        
+
         move |_| {
             if let Some(ModalType::EditDocument(_)) = modal_type_for_closure {
                 if let Some(doc) = &current_document_for_effect {
@@ -50,7 +50,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
             || ()
         }
     });
-    
+
     let on_title_input = {
         let title = title.clone();
         Callback::from(move |e: InputEvent| {
@@ -58,7 +58,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
             title.set(input.value());
         })
     };
-    
+
     let on_content_input = {
         let content = content.clone();
         Callback::from(move |e: InputEvent| {
@@ -66,7 +66,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
             content.set(input.value());
         })
     };
-    
+
     let on_tags_input = {
         let tags = tags.clone();
         Callback::from(move |e: InputEvent| {
@@ -74,7 +74,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
             tags.set(input.value());
         })
     };
-    
+
     let on_submit = {
         let title = title.clone();
         let content = content.clone();
@@ -83,16 +83,16 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
         let documents_handle = props.documents_handle.clone();
         let on_close = props.on_close.clone();
         let current_document = props.current_document.clone();
-        
+
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-            
+
             let tags_list: Vec<String> = (*tags)
                 .split(',')
                 .map(|t| t.trim().to_string())
                 .filter(|t| !t.is_empty())
                 .collect();
-            
+
             match modal_type {
                 Some(ModalType::CreateDocument) => {
                     let request = CreateDocumentRequest {
@@ -118,29 +118,29 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
             }
         })
     };
-    
+
     let on_close_click = {
         let on_close = props.on_close.clone();
         Callback::from(move |_: yew::MouseEvent| {
             on_close.emit(());
         })
     };
-    
+
     let on_close_click_clone = on_close_click.clone();
-    
+
     let modal_title = match &props.modal_type {
         Some(ModalType::CreateDocument) => "Create Document",
         Some(ModalType::EditDocument(_)) => "Edit Document",
         Some(ModalType::ViewDocument(_)) => "View Document",
         None => "Document",
     };
-    
+
     let is_read_only = matches!(props.modal_type, Some(ModalType::ViewDocument(_)));
-    
+
     if props.modal_type.is_none() {
         return html! {};
     }
-    
+
     html! {
         <div class="modal-overlay">
             <div class="modal">
@@ -148,7 +148,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
                     <h2 class="modal-title">{modal_title}</h2>
                     <button class="close-btn" onclick={on_close_click}>{"×"}</button>
                 </div>
-                
+
                 if is_read_only {
                     if let Some(doc) = &props.current_document {
                         <div>
@@ -179,8 +179,8 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
                     <form onsubmit={on_submit}>
                         <div class="form-group">
                             <label for="title">{"Title"}</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 id="title"
                                 value={(*title).clone()}
                                 oninput={on_title_input}
@@ -189,7 +189,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
                         </div>
                         <div class="form-group">
                             <label for="content">{"Content"}</label>
-                            <textarea 
+                            <textarea
                                 id="content"
                                 value={(*content).clone()}
                                 oninput={on_content_input}
@@ -198,8 +198,8 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
                         </div>
                         <div class="form-group">
                             <label for="tags">{"Tags (comma separated)"}</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 id="tags"
                                 value={(*tags).clone()}
                                 oninput={on_tags_input}

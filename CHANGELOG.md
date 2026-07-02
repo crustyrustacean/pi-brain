@@ -2,6 +2,43 @@
 
 All notable changes to pi-brain will be documented in this file.
 
+## [1.0.0] - 2026-07-01
+
+First stable release. The backend is rebuilt on the [`r2-photo-api`](https://codeberg.org/crustyrustacean/r2-photo-api) architecture, and the `ApiResponse`/`ApiError` JSON envelope is removed in favour of bare-JSON responses.
+
+### Backend
+
+- **Trait-based persistence layer** — introduce `DatabaseBackend` (async trait) with a `SqliteRepository` implementation, injected into the app as `Box<dyn DatabaseBackend>`. `DatabaseError` (`NotFound` / `Operation`) preserves the cause chain via `error_chain_fmt`.
+- **Per-route handlers** — one Actix handler per file (`create`, `read`, `update`, `delete`, `list`, `search`, `stats`, `endpoints`, `health`), each returning `Result<HttpResponse, actix_web::Error>` and carrying lower-level errors up via `e400` / `e500`.
+- **Migrations** now run inside `SqliteRepository::new` instead of `startup`.
+- **Dynamic search** rebuilt on sqlx 0.9 `QueryBuilder` (resolves the `SqlSafeStr` gate while keeping FTS5 + tag filtering fully bound).
+- **Instrumentation** — `#[tracing::instrument]` on database methods and error logging in `e400`/`e500`, so 4xx/5xx failures are diagnosable; request spans come from `TracingLogger`.
+- **`KnowledgeBaseStats` renamed to `PiBrainStats`.**
+
+### Removed
+
+- `ApiError` / `ApiResponse` and the `{ success, data, error }` envelope — all responses are now bare JSON.
+- `models.rs`, `db.rs`, `error.rs`, and `response.rs` replaced by `domain/` and `database/`.
+
+### Frontend
+
+- **API client rewritten on `gloo-net`**, dropping the hand-rolled `web_sys::fetch` plumbing. All methods consume bare domain types.
+- Hooks (`use_documents`, `use_search`, `use_stats`) updated to the bare-JSON contract.
+
+### Shared
+
+- Pure domain types only — removed the dead `backend` feature and its `actix-web` / `tracing` optional dependencies.
+
+### Workspace
+
+- Hoisted shared metadata to `[workspace.package]` and common dependencies to `[workspace.dependencies]`; edition 2024 across all members.
+- Removed the misplaced `frontend/.cargo/config.toml`; relocated the `wasm-pack` profile metadata into `frontend/Cargo.toml`.
+
+### Tests & docs
+
+- r2-style integration suite using an in-memory SQLite database (13 tests).
+- README rewritten to document the new architecture, the bare-JSON API contract, and the error model.
+
 ## [0.4.0] - 2026-06-13
 
 ### Frontend deployment

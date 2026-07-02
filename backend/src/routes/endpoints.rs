@@ -4,7 +4,6 @@
 // This allows clients (including pi instances without the extension) to
 // discover and interact with the knowledge base programmatically.
 
-use crate::response::ApiResponse;
 use actix_web::{HttpResponse, Responder};
 use serde::Serialize;
 
@@ -55,12 +54,12 @@ pub struct EndpointsResponse {
 pub async fn get_endpoints() -> impl Responder {
     let endpoints = build_endpoint_list();
 
-    HttpResponse::Ok().json(ApiResponse::success(EndpointsResponse {
+    HttpResponse::Ok().json(EndpointsResponse {
         name: "pi-brain".into(),
         version: env!("CARGO_PKG_VERSION").into(),
         base: "/kb".into(),
         endpoints,
-    }))
+    })
 }
 
 fn build_endpoint_list() -> Vec<EndpointDescription> {
@@ -73,7 +72,6 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
             parameters: vec![],
             example_body: None,
         },
-
         // ---- Documents ----
         EndpointDescription {
             method: "POST".into(),
@@ -136,14 +134,12 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
             method: "GET".into(),
             path: "/kb/documents/{id}".into(),
             description: "Get a single document by UUID.".into(),
-            parameters: vec![
-                ParameterDescription {
-                    name: "id".into(),
-                    param_type: "path (UUID)".into(),
-                    required: true,
-                    description: "The document UUID.".into(),
-                },
-            ],
+            parameters: vec![ParameterDescription {
+                name: "id".into(),
+                param_type: "path (UUID)".into(),
+                required: true,
+                description: "The document UUID.".into(),
+            }],
             example_body: None,
         },
         EndpointDescription {
@@ -190,22 +186,20 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
             method: "DELETE".into(),
             path: "/kb/documents/{id}".into(),
             description: "Soft-delete a document.".into(),
-            parameters: vec![
-                ParameterDescription {
-                    name: "id".into(),
-                    param_type: "path (UUID)".into(),
-                    required: true,
-                    description: "The document UUID.".into(),
-                },
-            ],
+            parameters: vec![ParameterDescription {
+                name: "id".into(),
+                param_type: "path (UUID)".into(),
+                required: true,
+                description: "The document UUID.".into(),
+            }],
             example_body: None,
         },
-
         // ---- Search ----
         EndpointDescription {
             method: "POST".into(),
             path: "/kb/search".into(),
-            description: "Full-text search across documents. Returns ranked results with excerpts.".into(),
+            description: "Full-text search across documents. Returns ranked results with excerpts."
+                .into(),
             parameters: vec![
                 ParameterDescription {
                     name: "query".into(),
@@ -241,7 +235,8 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         EndpointDescription {
             method: "GET".into(),
             path: "/kb/search".into(),
-            description: "Full-text search via GET query parameters (simpler but less expressive).".into(),
+            description: "Full-text search via GET query parameters (simpler but less expressive)."
+                .into(),
             parameters: vec![
                 ParameterDescription {
                     name: "q".into(),
@@ -264,12 +259,12 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
             ],
             example_body: None,
         },
-
         // ---- Stats ----
         EndpointDescription {
             method: "GET".into(),
             path: "/kb/stats".into(),
-            description: "Get knowledge base statistics (document count, unique tags, DB size, etc.).".into(),
+            description:
+                "Get knowledge base statistics (document count, unique tags, DB size, etc.).".into(),
             parameters: vec![],
             example_body: None,
         },

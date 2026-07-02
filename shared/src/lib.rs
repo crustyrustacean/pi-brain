@@ -4,9 +4,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[cfg(feature = "backend")]
-mod backend_impl;
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Document {
     pub id: Uuid,
@@ -68,37 +65,12 @@ pub struct SearchResponse {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct KnowledgeBaseStats {
+pub struct PiBrainStats {
     pub total_documents: i64,
     pub total_links: i64,
     pub unique_tags: i64,
     pub database_size_bytes: i64,
     pub last_updated: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    pub error: Option<String>,
-}
-
-impl<T: serde::Serialize> ApiResponse<T> {
-    pub fn success(data: T) -> Self {
-        Self {
-            success: true,
-            data: Some(data),
-            error: None,
-        }
-    }
-
-    pub fn error(message: &str) -> Self {
-        Self {
-            success: false,
-            data: None,
-            error: Some(message.to_string()),
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

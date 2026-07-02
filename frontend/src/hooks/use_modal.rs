@@ -27,10 +27,10 @@ impl Default for ModalState {
 #[hook]
 pub fn use_modal() -> UseModalHandle {
     let state = use_state(|| ModalState::default());
-    
+
     let open_modal = {
         let state = state.clone();
-        
+
         Callback::from(move |modal_type: ModalType| {
             state.set(ModalState {
                 is_open: true,
@@ -38,15 +38,15 @@ pub fn use_modal() -> UseModalHandle {
             });
         })
     };
-    
+
     let close_modal = {
         let state = state.clone();
-        
+
         Callback::from(move |_| {
             state.set(ModalState::default());
         })
     };
-    
+
     UseModalHandle {
         state: (*state).clone(),
         open_modal,

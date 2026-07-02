@@ -1,8 +1,6 @@
 // src/components/search_bar.rs
 
 use yew::prelude::*;
-use crate::hooks::use_search;
-use pi_brain_shared::SearchRequest;
 
 #[derive(Properties, PartialEq)]
 pub struct SearchBarProps {
@@ -12,20 +10,20 @@ pub struct SearchBarProps {
 #[function_component(SearchBar)]
 pub fn search_bar(props: &SearchBarProps) -> Html {
     let query = use_state(|| String::new());
-    
+
     let on_input = {
         let query = query.clone();
-        
+
         Callback::from(move |e: InputEvent| {
             let input: web_sys::HtmlInputElement = e.target_unchecked_into();
             query.set(input.value());
         })
     };
-    
+
     let on_submit = {
         let query = query.clone();
         let on_search = props.on_search.clone();
-        
+
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             let search_query = (*query).clone();
@@ -34,12 +32,12 @@ pub fn search_bar(props: &SearchBarProps) -> Html {
             }
         })
     };
-    
+
     html! {
         <form class="search-bar" onsubmit={on_submit}>
-            <input 
-                type="text" 
-                placeholder="Search documents..." 
+            <input
+                type="text"
+                placeholder="Search documents..."
                 value={(*query).clone()}
                 oninput={on_input}
             />

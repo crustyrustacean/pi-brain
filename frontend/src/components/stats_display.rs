@@ -1,12 +1,11 @@
 // src/components/stats_display.rs
 
+use pi_brain_shared::PiBrainStats;
 use yew::prelude::*;
-use crate::hooks::use_stats;
-use pi_brain_shared::KnowledgeBaseStats;
 
 #[derive(Properties, Clone)]
 pub struct StatsDisplayProps {
-    pub stats: Option<KnowledgeBaseStats>,
+    pub stats: Option<PiBrainStats>,
 }
 
 impl PartialEq for StatsDisplayProps {

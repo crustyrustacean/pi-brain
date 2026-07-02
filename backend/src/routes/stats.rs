@@ -1,17 +1,17 @@
 // src/routes/stats.rs
 
-use crate::db::Database;
-use crate::response::ApiResponse;
-use actix_web::{web, HttpResponse, Responder, ResponseError};
-use sqlx::SqlitePool;
+// dependencies
+use crate::database::DatabaseBackend;
+use crate::utils::e500;
+use actix_web::HttpResponse;
+use actix_web::web::Data;
 
-/// Get knowledge base statistics
+/// GET /kb/stats — knowledge base statistics.
 #[actix_web::get("/kb/stats")]
-async fn get_stats(db_pool: web::Data<SqlitePool>) -> impl Responder {
-    let db = Database::new(db_pool.get_ref().clone());
+pub async fn get_stats(
+    database: Data<Box<dyn DatabaseBackend>>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let stats = database.get_stats().await.map_err(e500)?;
 
-    match db.get_stats().await {
-        Ok(stats) => HttpResponse::Ok().json(ApiResponse::success(stats)),
-        Err(e) => e.error_response(),
-    }
+    Ok(HttpResponse::Ok().json(stats))
 }

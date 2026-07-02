@@ -1,8 +1,5 @@
-// tests/api/health_check.rs
-
 // dependencies
 use crate::helpers::spawn_app;
-use knowledge_base::response::ApiResponse;
 
 #[tokio::test]
 async fn health_check_works() {
@@ -12,20 +9,12 @@ async fn health_check_works() {
 
     // Act
     let response = client
-        .get(&format!("{}/health_check", &app.address))
+        .get(format!("{}/health_check", &app.address))
         .send()
         .await
         .expect("Failed to execute request.");
 
     // Assert
     assert!(response.status().is_success());
-
-    let body: ApiResponse<()> = response
-        .json()
-        .await
-        .expect("Failed to deserialize response.");
-
-    assert!(body.success);
-    assert!(body.data.is_none());
-    assert!(body.error.is_none());
+    assert_eq!(Some(0), response.content_length());
 }

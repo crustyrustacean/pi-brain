@@ -10,15 +10,24 @@ pi-brain gives AI assistants long-term memory. Documents are stored in a local S
 
 ```
 pi-brain/
-├── backend/          Actix Web REST API (Rust)
-├── frontend/        Yew WASM SPA (Rust → WebAssembly)
-├── shared/           Shared types crate (Rust)
-└── configuration/    YAML config (base + environment overlays)
+├── backend/              Actix Web REST API (Rust, edition 2024)
+│   ├── src/
+│   │   ├── bin/          Application entrypoint
+│   │   ├── database/     `DatabaseBackend` trait + `SqliteRepository` (sqlx/SQLite)
+│   │   ├── domain/       Domain types re-exported from `shared`
+│   │   ├── routes/       One handler per endpoint (create, read, update, …)
+│   │   └── configuration.rs / startup.rs / telemetry.rs / utils.rs
+│   ├── configuration/    Layered YAML config (base + environment overlays)
+│   └── migrations/       SQLite schema + FTS5 (run automatically on startup)
+├── frontend/             Yew WASM SPA (Rust → WebAssembly), built with Trunk
+├── shared/               Shared domain types crate (pure data types)
+└── Cargo.toml            Workspace root (shared metadata + dependency versions)
 ```
 
-- **Backend** — Actix Web 4 with SQLite (via sqlx), FTS5 full-text search, structured JSON logging, and layered YAML configuration
-- **Frontend** — Yew 0.23 compiled to WebAssembly via Trunk. Document CRUD, search, and stats dashboard
-- **Shared** — Common request/response types ensuring type-safe consistency between frontend and backend
+- **Backend** — Actix Web 4 with SQLite (via sqlx) and FTS5 full-text search. Persistence sits behind a `DatabaseBackend` trait with a `SqliteRepository` implementation, injected into the app as a trait object (`Box<dyn DatabaseBackend>`). Structured JSON logging and layered YAML configuration.
+- **Frontend** — Yew 0.23 compiled to WebAssembly via Trunk. Document CRUD, search, and a stats dashboard; talks to the API over `gloo-net`.
+- **Shared** — Common domain types (`Document`, request/response DTOs, `PiBrainStats`) shared between frontend and backend for type-safe consistency. Pure data types with no backend framework dependencies.
+- **Workspace** — Shared package metadata (`[workspace.package]`) and common dependency versions (`[workspace.dependencies]`) are declared once at the workspace root and inherited by each member crate.
 
 ## API
 
@@ -37,15 +46,27 @@ All data endpoints are under `/kb/`.
 | GET | `/kb/stats` | Knowledge base statistics |
 | GET | `/kb/endpoints` | API discovery (machine-readable) |
 
-All responses use a consistent JSON envelope:
+Responses are **bare JSON** — the entity (or DTO) is returned directly, with no
+envelope wrapper. For example, `GET /kb/documents/{id}` returns the document:
 
 ```json
 {
-  "success": true,
-  "data": { ... },
-  "error": null
+  "id": "9b1f7a2e-...-d4",
+  "title": "Example",
+  "content": "…",
+  "content_hash": "sha256…",
+  "tags": ["example"],
+  "metadata": null,
+  "created_at": "2026-07-01T12:00:00Z",
+  "updated_at": "2026-07-01T12:00:00Z"
 }
 ```
+
+**Errors.** Route handlers return `Result<HttpResponse, actix_web::Error>` and carry
+lower-level errors up via the `e400` / `e500` helpers in `utils.rs`. The database
+layer's `DatabaseError` (`NotFound` / `Operation`) surfaces as HTTP 500, and a
+malformed UUID in a path segment yields HTTP 400. (This mirrors the
+[`r2-photo-api`](https://codeberg.org/crustyrustacean/r2-photo-api) error model.)
 
 ## Prerequisites
 

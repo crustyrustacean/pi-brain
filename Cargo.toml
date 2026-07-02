@@ -2,3 +2,18 @@
 members = ["backend", "frontend", "shared"]
 resolver = "2"
 
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+authors = ["Jeffery D. Mitchell", "<crusty.rustacean@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/crustyrustacean/pi-brain.git"
+publish = false
+
+[workspace.dependencies]
+# Shared across all (or most) members; members inherit via `<dep>.workspace = true`
+# and may add further `features = [...]` on top of the base defined here.
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4.44", default-features = false, features = ["clock"] }

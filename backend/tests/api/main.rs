@@ -1,7 +1,7 @@
 // tests/api
 
-mod health_check;
 mod documents;
+mod health_check;
+mod helpers;
 mod search;
 mod stats;
-mod helpers;

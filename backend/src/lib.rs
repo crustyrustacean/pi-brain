@@ -2,10 +2,9 @@
 
 // module declarations
 pub mod configuration;
-pub mod db;
-pub mod error;
-pub mod models;
-pub mod response;
+pub mod database;
+pub mod domain;
 pub mod routes;
 pub mod startup;
 pub mod telemetry;
+pub mod utils;

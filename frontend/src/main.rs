@@ -1,12 +1,12 @@
 // src/main.rs
 
 mod api;
-mod hooks;
 mod components;
+mod hooks;
 mod pages;
 
-use yew::prelude::*;
 use pages::HomePage;
+use yew::prelude::*;
 
 #[function_component(App)]
 pub fn app() -> Html {

@@ -6,8 +6,8 @@ use std::convert::{TryFrom, TryInto};
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
-    pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub database: DatabaseSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -21,12 +21,8 @@ pub struct ApplicationSettings {
 #[derive(serde::Deserialize, Clone)]
 pub struct DatabaseSettings {
     pub path: String,
-}
-
-impl DatabaseSettings {
-    pub fn connection_string(&self) -> String {
-        format!("sqlite:{}", self.path)
-    }
+    #[serde(default)]
+    pub max_connections: Option<u32>,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

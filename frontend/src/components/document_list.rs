@@ -1,8 +1,7 @@
 // src/components/document_list.rs
 
-use yew::prelude::*;
 use pi_brain_shared::Document;
-use crate::hooks::use_modal::ModalType;
+use yew::prelude::*;
 
 #[derive(Properties, Clone)]
 pub struct DocumentListProps {
@@ -20,12 +19,12 @@ impl PartialEq for DocumentListProps {
 pub fn document_list(props: &DocumentListProps) -> Html {
     let on_click = {
         let on_document_click = props.on_document_click.clone();
-        
+
         Callback::from(move |id: uuid::Uuid| {
             on_document_click.emit(id);
         })
     };
-    
+
     html! {
         <div class="document-list">
             {for props.documents.iter().map(|doc| {
@@ -36,7 +35,7 @@ pub fn document_list(props: &DocumentListProps) -> Html {
                         on_click.emit(doc_id);
                     })
                 };
-                
+
                 html! {
                     <div class="document-item" {onclick}>
                         <div class="document-title">{&doc.title}</div>

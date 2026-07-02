@@ -1,15 +1,11 @@
-// tests/api/helpers.rs
-
 // dependencies
-use knowledge_base::configuration::{get_configuration, DatabaseSettings};
-use knowledge_base::startup::{get_connection_pool, Application};
-use knowledge_base::telemetry::{get_subscriber, init_subscriber};
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
+use pi_brain::configuration::get_configuration;
+use pi_brain::database::{DatabaseBackend, SqliteRepository};
+use pi_brain::startup::Application;
+use pi_brain::telemetry::{get_subscriber, init_subscriber};
 use std::sync::LazyLock;
-use std::str::FromStr;
-use tempfile::NamedTempFile;
 
-// Ensure that the `tracing` stack is only initialised once using `once_cell`
+// Ensure that the `tracing` stack is only initialised once.
 static TRACING: LazyLock<()> = LazyLock::new(|| {
     let default_filter_level = "info".to_string();
     let subscriber_name = "test".to_string();
@@ -26,30 +22,33 @@ static TRACING: LazyLock<()> = LazyLock::new(|| {
 pub struct TestApp {
     pub address: String,
     pub port: u16,
-    pub db_pool: SqlitePool,
     pub api_client: reqwest::Client,
-    // Keep the temp file alive for the test duration
-    _temp_db: NamedTempFile,
+    pub database: SqliteRepository,
 }
 
 pub async fn spawn_app() -> TestApp {
     LazyLock::force(&TRACING);
 
-    // Create a temporary SQLite database file
-    let temp_db = NamedTempFile::new().expect("Failed to create temp database file");
-    let db_path = temp_db.path().to_string_lossy().to_string();
-
     let configuration = {
         let mut c = get_configuration().expect("Failed to read configuration.");
-        c.database.path = db_path;
+
         c.application.port = 0;
+        c.database.path = ":memory:".to_string();
+        c.database.max_connections = Some(1);
+
         c
     };
 
-    configure_database(&configuration.database).await;
+    // build the database backend
+    let database = SqliteRepository::new(&configuration.database)
+        .await
+        .expect("Unable to build the database backend.");
+    let database_for_test = database.clone();
 
-    // Launch the application as a background task
-    let application = Application::build(configuration.clone())
+    let database_backend: Box<dyn DatabaseBackend> = Box::new(database);
+
+    // launch the application as a background task
+    let application = Application::build(configuration.clone(), database_backend)
         .await
         .expect("Failed to build application.");
     let application_port = application.port();
@@ -60,32 +59,10 @@ pub async fn spawn_app() -> TestApp {
         .build()
         .unwrap();
 
-    let test_app = TestApp {
+    TestApp {
         address: format!("http://localhost:{}", application_port),
         port: application_port,
-        db_pool: get_connection_pool(&configuration.database),
         api_client: client,
-        _temp_db: temp_db,
-    };
-
-    test_app
-}
-
-async fn configure_database(config: &DatabaseSettings) -> SqlitePool {
-    // Create and migrate database
-    let connection_string = config.connection_string();
-    let options = SqliteConnectOptions::from_str(&connection_string)
-        .expect("Failed to parse connection string")
-        .create_if_missing(true);
-    
-    let connection_pool = SqlitePool::connect_with(options)
-        .await
-        .expect("Failed to connect to SQLite.");
-
-    sqlx::migrate!("./migrations")
-        .run(&connection_pool)
-        .await
-        .expect("Failed to migrate the database");
-    
-    connection_pool
+        database: database_for_test,
+    }
 }
