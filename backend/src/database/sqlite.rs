@@ -1,14 +1,13 @@
 // src/database/sqlite.rs
 
 use crate::configuration::DatabaseSettings;
-use crate::database::{DatabaseBackend, DatabaseError};
+use crate::database::{DatabaseBackend, DatabaseError, DocumentRow};
 use crate::domain::{Document, PiBrainStats};
 use anyhow::Context;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use sqlx::{FromRow, QueryBuilder, SqlitePool};
+use sqlx::{QueryBuilder, SqlitePool};
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -20,54 +19,6 @@ fn compute_content_hash(content: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(content.as_bytes());
     hex::encode(hasher.finalize())
-}
-
-// `documents.id` is stored as `TEXT PRIMARY KEY`; we hold the UUID as its
-// canonical hyphenated string form so the on-disk value matches what the API
-// exposes (and so it compares equal to the `TEXT` column).
-#[derive(Debug, FromRow)]
-struct DocumentRow {
-    id: String,
-    title: String,
-    content: String,
-    content_hash: String,
-    tags: String,
-    metadata: Option<String>,
-    created_at: String,
-    updated_at: String,
-}
-
-impl TryFrom<DocumentRow> for Document {
-    type Error = anyhow::Error;
-
-    fn try_from(row: DocumentRow) -> Result<Self, Self::Error> {
-        let id = Uuid::parse_str(&row.id).context("Failed to parse document id.")?;
-        let tags: Vec<String> =
-            serde_json::from_str(&row.tags).context("Failed to parse document tags.")?;
-        let metadata = row
-            .metadata
-            .filter(|s| !s.is_empty())
-            .map(|s| serde_json::from_str::<serde_json::Value>(&s))
-            .transpose()
-            .context("Failed to parse document metadata.")?;
-        let created_at = DateTime::parse_from_rfc3339(&row.created_at)
-            .context("Failed to parse created_at.")?
-            .with_timezone(&Utc);
-        let updated_at = DateTime::parse_from_rfc3339(&row.updated_at)
-            .context("Failed to parse updated_at.")?
-            .with_timezone(&Utc);
-
-        Ok(Document {
-            id,
-            title: row.title,
-            content: row.content,
-            content_hash: row.content_hash,
-            tags,
-            metadata,
-            created_at,
-            updated_at,
-        })
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -112,7 +63,7 @@ impl DatabaseBackend for SqliteRepository {
         content: &str,
         tags: &[String],
         metadata: Option<&serde_json::Value>,
-    ) -> Result<Document, DatabaseError> {
+    ) -> Result<DocumentRow, DatabaseError> {
         let content_hash = compute_content_hash(content);
 
         // Deduplicate by content hash — return the existing document if present.
