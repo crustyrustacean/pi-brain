@@ -1,7 +1,9 @@
 // src/hooks/use_documents.rs
 
 use crate::api::ApiClient;
-use pi_brain_shared::{CreateDocumentRequest, Document, DocumentListResponse, UpdateDocumentRequest};
+use pi_brain_shared::{
+    CreateDocumentRequest, Document, DocumentListResponse, UpdateDocumentRequest,
+};
 use std::sync::Arc;
 use yew::prelude::*;
 
@@ -38,9 +40,7 @@ pub fn use_documents() -> UseDocumentsHandle {
                 next.loading = false;
                 match result {
                     Ok(DocumentListResponse {
-                        documents,
-                        total,
-                        ..
+                        documents, total, ..
                     }) => {
                         next.documents = documents;
                         next.total = total;

@@ -3,7 +3,6 @@
 use crate::configuration::DatabaseSettings;
 use crate::database::{DatabaseBackend, DatabaseError, DocumentRow};
 use crate::domain::{Document, PiBrainStats};
-use crate::utils::compute_content_hash;
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -13,7 +12,8 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 /// Columns selected for every document read. Kept in sync with `DocumentRow`.
-const SELECT_COLUMNS: &str = "id, title, content, content_hash, tags, metadata, created_at, updated_at";
+const SELECT_COLUMNS: &str =
+    "id, title, content, content_hash, tags, metadata, created_at, updated_at";
 
 #[derive(Debug, Clone)]
 pub struct SqliteRepository {
@@ -50,45 +50,43 @@ impl SqliteRepository {
 
 #[async_trait]
 impl DatabaseBackend for SqliteRepository {
-    #[tracing::instrument(skip(self, content, tags, metadata))]
-    async fn create_document(
+    #[tracing::instrument(skip(self))]
+    async fn find_document_by_content_hash(
         &self,
-        title: &str,
-        content: &str,
-        tags: &[String],
-        metadata: Option<&serde_json::Value>,
-    ) -> Result<DocumentRow, DatabaseError> {
-        let content_hash = compute_content_hash(content);
+        content_hash: &str,
+    ) -> Result<Option<DocumentRow>, DatabaseError> {
+        let row: Option<DocumentRow> = sqlx::query_as(
+            "SELECT id, title, content, content_hash, tags, metadata, created_at, updated_at
+             FROM documents WHERE content_hash = ? AND is_deleted = 0",
+        )
+        .bind(content_hash)
+        .fetch_optional(&self.pool)
+        .await
+        .context("Failed to check for duplicate content.")?;
 
-        // Deduplicate by content hash — return the existing document if present.
-        let existing: Option<(String,)> =
-            sqlx::query_as("SELECT id FROM documents WHERE content_hash = ? AND is_deleted = 0")
-                .bind(&content_hash)
-                .fetch_optional(&self.pool)
-                .await
-                .context("Failed to check for duplicate content.")?;
-        if let Some((id_str,)) = existing {
-            let id =
-                Uuid::parse_str(&id_str).context("Failed to parse existing document id.")?;
-            return self.get_document(id).await;
-        }
+        Ok(row)
+    }
 
-        let id = Uuid::new_v4();
-        let now = Utc::now().to_rfc3339();
-        let tags_json = serde_json::to_string(tags).context("Failed to serialize tags.")?;
-        let metadata_json = metadata
+    #[tracing::instrument(skip(self, document))]
+    async fn insert_document(&self, document: &Document) -> Result<(), DatabaseError> {
+        let tags_json =
+            serde_json::to_string(&document.tags).context("Failed to serialize tags.")?;
+        let metadata_json = document
+            .metadata
+            .as_ref()
             .map(serde_json::to_string)
             .transpose()
             .context("Failed to serialize metadata.")?;
+        let now = Utc::now().to_rfc3339();
 
         sqlx::query(
             "INSERT INTO documents (id, title, content, content_hash, tags, metadata, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )
-        .bind(id.to_string())
-        .bind(title)
-        .bind(content)
-        .bind(&content_hash)
+        .bind(document.id.to_string())
+        .bind(&document.title)
+        .bind(&document.content)
+        .bind(&document.content_hash)
         .bind(&tags_json)
         .bind(metadata_json)
         .bind(&now)
@@ -97,7 +95,7 @@ impl DatabaseBackend for SqliteRepository {
         .await
         .context("Failed to create the document.")?;
 
-        self.get_document(id).await
+        Ok(())
     }
 
     #[tracing::instrument(skip(self))]
@@ -115,31 +113,13 @@ impl DatabaseBackend for SqliteRepository {
         Ok(row)
     }
 
-    #[tracing::instrument(skip(self, content, tags, metadata))]
-    async fn update_document(
-        &self,
-        id: Uuid,
-        title: Option<&str>,
-        content: Option<&str>,
-        tags: Option<&[String]>,
-        metadata: Option<&serde_json::Value>,
-    ) -> Result<DocumentRow, DatabaseError> {
-        // Partial update: fall back to the existing values for absent fields.
-        let existing = self.get_document(id).await?;
-
-        let new_title = title.unwrap_or(&existing.title);
-        let new_content = content.unwrap_or(&existing.content);
-        let new_tags = tags.unwrap_or(&existing.tags);
-        let new_content_hash = if content.is_some() {
-            compute_content_hash(new_content)
-        } else {
-            existing.content_hash.clone()
-        };
-        let new_metadata = metadata.or(existing.metadata.as_ref());
-
-        let now = Utc::now().to_rfc3339();
-        let tags_json = serde_json::to_string(new_tags).context("Failed to serialize tags.")?;
-        let metadata_json = new_metadata
+    #[tracing::instrument(skip(self, document))]
+    async fn update_document(&self, document: &Document) -> Result<(), DatabaseError> {
+        let tags_json =
+            serde_json::to_string(&document.tags).context("Failed to serialize tags.")?;
+        let metadata_json = document
+            .metadata
+            .as_ref()
             .map(serde_json::to_string)
             .transpose()
             .context("Failed to serialize metadata.")?;
@@ -149,29 +129,34 @@ impl DatabaseBackend for SqliteRepository {
              SET title = ?, content = ?, content_hash = ?, tags = ?, metadata = ?, updated_at = ?
              WHERE id = ?",
         )
-        .bind(new_title)
-        .bind(new_content)
-        .bind(&new_content_hash)
+        .bind(&document.title)
+        .bind(&document.content)
+        .bind(&document.content_hash)
         .bind(&tags_json)
         .bind(metadata_json)
-        .bind(&now)
-        .bind(id.to_string())
+        .bind(Utc::now().to_rfc3339())
+        .bind(document.id.to_string())
         .execute(&self.pool)
         .await
         .context("Failed to update the document.")?;
 
-        self.get_document(id).await
+        Ok(())
     }
 
     #[tracing::instrument(skip(self))]
     async fn delete_document(&self, id: Uuid) -> Result<(), DatabaseError> {
-        sqlx::query("UPDATE documents SET is_deleted = 1, updated_at = ? WHERE id = ?")
-            .bind(Utc::now().to_rfc3339())
-            .bind(id.to_string())
-            .execute(&self.pool)
-            .await
-            .context("Failed to delete the document.")?;
+        let result = sqlx::query(
+            "UPDATE documents SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0",
+        )
+        .bind(Utc::now().to_rfc3339())
+        .bind(id.to_string())
+        .execute(&self.pool)
+        .await
+        .context("Failed to delete the document.")?;
 
+        if result.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound(id.to_string()));
+        }
         Ok(())
     }
 
@@ -267,7 +252,11 @@ impl DatabaseBackend for SqliteRepository {
                 .context("Failed to read the last updated timestamp.")?;
         let last_updated = last_updated_raw
             .flatten()
-            .and_then(|s| DateTime::parse_from_rfc3339(&s).ok().map(|dt| dt.with_timezone(&Utc)))
+            .and_then(|s| {
+                DateTime::parse_from_rfc3339(&s)
+                    .ok()
+                    .map(|dt| dt.with_timezone(&Utc))
+            })
             .unwrap_or_else(Utc::now);
 
         // TODO: compute the real unique-tag count instead of this rough estimate.

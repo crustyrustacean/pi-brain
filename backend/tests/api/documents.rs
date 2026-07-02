@@ -39,7 +39,10 @@ async fn create_document_returns_200_with_document() {
     let id = body["id"].as_str().unwrap().to_string();
 
     assert_eq!(body["title"], "Test Document");
-    assert_eq!(body["content"], "This is test content for the knowledge base.");
+    assert_eq!(
+        body["content"],
+        "This is test content for the knowledge base."
+    );
     assert_eq!(body["tags"][0], "test");
     assert_eq!(body["tags"][1], "sample");
     assert_eq!(body["metadata"]["author"], "test_user");
@@ -141,7 +144,7 @@ async fn get_document_returns_document_for_valid_id() {
 }
 
 #[tokio::test]
-async fn get_document_returns_500_for_nonexistent_id() {
+async fn get_document_returns_404_for_nonexistent_id() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
@@ -154,11 +157,8 @@ async fn get_document_returns_500_for_nonexistent_id() {
         .await
         .expect("Failed to execute request.");
 
-    // Assert — the repository surfaces `NotFound`, mapped to a 500 via `e500`.
-    assert_eq!(
-        response.status(),
-        reqwest::StatusCode::INTERNAL_SERVER_ERROR
-    );
+    // Assert — the repository surfaces `NotFound`, mapped to 404 via `ResponseError`.
+    assert_eq!(response.status(), reqwest::StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]
@@ -246,10 +246,7 @@ async fn delete_document_soft_deletes_then_hides_it() {
         .send()
         .await
         .unwrap();
-    assert_eq!(
-        get_response.status(),
-        reqwest::StatusCode::INTERNAL_SERVER_ERROR
-    );
+    assert_eq!(get_response.status(), reqwest::StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]

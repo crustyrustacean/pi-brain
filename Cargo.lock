@@ -1979,7 +1979,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
 name = "pi-brain-backend"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -2008,7 +2008,7 @@ dependencies = [
 
 [[package]]
 name = "pi-brain-frontend"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "gloo-net 0.7.0",
  "gloo-utils 0.3.0",
@@ -2025,7 +2025,7 @@ dependencies = [
 
 [[package]]
 name = "pi-brain-shared"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "chrono",
  "serde",

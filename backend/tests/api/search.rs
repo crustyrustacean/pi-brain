@@ -23,8 +23,9 @@ async fn search_returns_matching_documents() {
         &[
             CreateDocumentRequest {
                 title: "Rust Programming".into(),
-                content: "Rust is a systems programming language focused on safety and performance."
-                    .into(),
+                content:
+                    "Rust is a systems programming language focused on safety and performance."
+                        .into(),
                 tags: vec!["rust".into()],
                 metadata: None,
             },

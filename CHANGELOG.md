@@ -2,6 +2,23 @@
 
 All notable changes to pi-brain will be documented in this file.
 
+## [1.1.0] - 2026-07-02
+
+Untangles the database and route layers and fixes the missing-document status code.
+
+### Backend
+
+- **Lifted construction out of the database methods.** `create_document` and `update_document` no longer fetch/merge/hash/serialize inside the repo. The handlers now build a fully-resolved `Document` (hash, id, timestamps, partial-update merge, dedup orchestration) and hand it to a dumb write; the repo's `insert_document` / `update_document` do one statement each.
+- **`DatabaseError` implements `actix_web::ResponseError`.** `NotFound` now reaches the client as **404** and `Operation` as 500, so `get`/`update`/`delete` of a missing document return 404 instead of 500/204. The typed error carries its own status; handlers propagate it via `?`.
+- **`delete_document` checks `rows_affected()`** (with `AND is_deleted = 0`) so deleting a missing or already-deleted document raises `NotFound` → 404 instead of a silent 204.
+- **`compute_content_hash` is now handler-only** (moved out of the repo; the repo no longer imports it).
+- The `e400` / `e500` helpers remain scoped to untyped errors (e.g. `Uuid::parse_str` → 400, `DocumentRow → Document` mapping → 500), matching the zero2prod layering where typed errors self-describe their status.
+
+### Tests
+
+- Updated missing-document assertions from 500 to 404; renamed `get_document_returns_500_for_nonexistent_id` → `..._404_...`.
+- Verified the full range live: missing → 404 across GET/PUT/DELETE, malformed uuid → 400, soft-delete hides the document (GET → 404), re-delete → 404.
+
 ## [1.0.0] - 2026-07-01
 
 First stable release. The backend is rebuilt on the [`r2-photo-api`](https://codeberg.org/crustyrustacean/r2-photo-api) architecture, and the `ApiResponse`/`ApiError` JSON envelope is removed in favour of bare-JSON responses.

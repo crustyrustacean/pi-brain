@@ -2,14 +2,14 @@
 
 use crate::domain::{Document, PiBrainStats};
 use crate::utils::error_chain_fmt;
+use actix_web::http::StatusCode;
+use actix_web::ResponseError;
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use serde::Serialize;
 use sqlx::FromRow;
 use thiserror::Error;
 use uuid::Uuid;
-
 
 pub mod sqlite;
 
@@ -30,26 +30,27 @@ impl std::fmt::Debug for DatabaseError {
     }
 }
 
+impl ResponseError for DatabaseError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            DatabaseError::NotFound(_) => StatusCode::NOT_FOUND,
+            DatabaseError::Operation(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
 #[async_trait]
 pub trait DatabaseBackend: Send + Sync {
-    async fn create_document(
+    async fn find_document_by_content_hash(
         &self,
-        title: &str,
-        content: &str,
-        tags: &[String],
-        metadata: Option<&serde_json::Value>,
-    ) -> Result<DocumentRow, DatabaseError>;
+        content_hash: &str,
+    ) -> Result<Option<DocumentRow>, DatabaseError>;
+
+    async fn insert_document(&self, document: &Document) -> Result<(), DatabaseError>;
 
     async fn get_document(&self, id: Uuid) -> Result<DocumentRow, DatabaseError>;
 
-    async fn update_document(
-        &self,
-        id: Uuid,
-        title: Option<&str>,
-        content: Option<&str>,
-        tags: Option<&[String]>,
-        metadata: Option<&serde_json::Value>,
-    ) -> Result<DocumentRow, DatabaseError>;
+    async fn update_document(&self, document: &Document) -> Result<(), DatabaseError>;
 
     async fn delete_document(&self, id: Uuid) -> Result<(), DatabaseError>;
 
@@ -64,9 +65,8 @@ pub trait DatabaseBackend: Send + Sync {
     async fn get_stats(&self) -> Result<PiBrainStats, DatabaseError>;
 }
 
-
-#[derive(Debug, FromRow, Serialize)]
-struct DocumentRow {
+#[derive(Debug, FromRow)]
+pub struct DocumentRow {
     id: String,
     title: String,
     content: String,

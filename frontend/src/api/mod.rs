@@ -23,9 +23,7 @@ impl ApiClient {
     }
 
     /// Send a request and decode a JSON body, mapping non-2xx to `ApiError::Http`.
-    async fn decode<T: for<'de> Deserialize<'de>>(
-        response: Response,
-    ) -> Result<T, ApiError> {
+    async fn decode<T: for<'de> Deserialize<'de>>(response: Response) -> Result<T, ApiError> {
         if !response.ok() {
             return Err(ApiError::Http(response.status(), response.status_text()));
         }
@@ -42,13 +40,11 @@ impl ApiClient {
         limit: usize,
         offset: usize,
     ) -> Result<DocumentListResponse, ApiError> {
-        let response = Request::get(&self.url(&format!(
-            "/kb/documents?limit={}&offset={}",
-            limit, offset
-        )))
-        .send()
-        .await
-        .map_err(|e| ApiError::Network(e.to_string()))?;
+        let response =
+            Request::get(&self.url(&format!("/kb/documents?limit={}&offset={}", limit, offset)))
+                .send()
+                .await
+                .map_err(|e| ApiError::Network(e.to_string()))?;
 
         Self::decode(response).await
     }
@@ -63,10 +59,7 @@ impl ApiClient {
         Self::decode(response).await
     }
 
-    pub async fn create_document(
-        &self,
-        req: &CreateDocumentRequest,
-    ) -> Result<Document, ApiError> {
+    pub async fn create_document(&self, req: &CreateDocumentRequest) -> Result<Document, ApiError> {
         let response = Request::post(&self.url("/kb/documents"))
             .json(req)
             .map_err(|e| ApiError::Network(e.to_string()))?
@@ -106,10 +99,7 @@ impl ApiClient {
 
     // ---- Search ----
 
-    pub async fn search_documents(
-        &self,
-        req: &SearchRequest,
-    ) -> Result<SearchResponse, ApiError> {
+    pub async fn search_documents(&self, req: &SearchRequest) -> Result<SearchResponse, ApiError> {
         let response = Request::post(&self.url("/kb/search"))
             .json(req)
             .map_err(|e| ApiError::Network(e.to_string()))?
