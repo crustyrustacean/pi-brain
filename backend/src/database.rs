@@ -5,6 +5,7 @@ use crate::utils::error_chain_fmt;
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use sqlx::FromRow;
 use thiserror::Error;
 use uuid::Uuid;
@@ -37,7 +38,7 @@ pub trait DatabaseBackend: Send + Sync {
         content: &str,
         tags: &[String],
         metadata: Option<&serde_json::Value>,
-    ) -> Result<Document, DatabaseError>;
+    ) -> Result<DocumentRow, DatabaseError>;
 
     async fn get_document(&self, id: Uuid) -> Result<DocumentRow, DatabaseError>;
 
@@ -48,7 +49,7 @@ pub trait DatabaseBackend: Send + Sync {
         content: Option<&str>,
         tags: Option<&[String]>,
         metadata: Option<&serde_json::Value>,
-    ) -> Result<Document, DatabaseError>;
+    ) -> Result<DocumentRow, DatabaseError>;
 
     async fn delete_document(&self, id: Uuid) -> Result<(), DatabaseError>;
 
@@ -64,7 +65,7 @@ pub trait DatabaseBackend: Send + Sync {
 }
 
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, Serialize)]
 struct DocumentRow {
     id: String,
     title: String,

@@ -1,5 +1,7 @@
 // src/utils.rs
 
+use sha2::{Digest, Sha256};
+
 // Return an opaque 500 while preserving the error root's cause for logging.
 pub fn e500<T>(e: T) -> actix_web::Error
 where
@@ -30,4 +32,11 @@ pub fn error_chain_fmt(
         current = cause.source();
     }
     Ok(())
+}
+
+/// SHA-256 content hash, used for deduplication.
+pub fn compute_content_hash(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    hex::encode(hasher.finalize())
 }

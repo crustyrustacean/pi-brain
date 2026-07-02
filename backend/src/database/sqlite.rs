@@ -3,9 +3,10 @@
 use crate::configuration::DatabaseSettings;
 use crate::database::{DatabaseBackend, DatabaseError, DocumentRow};
 use crate::domain::{Document, PiBrainStats};
+use crate::utils::compute_content_hash;
 use anyhow::Context;
 use async_trait::async_trait;
-use sha2::{Digest, Sha256};
+use chrono::{DateTime, Utc};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{QueryBuilder, SqlitePool};
 use std::str::FromStr;
@@ -13,13 +14,6 @@ use uuid::Uuid;
 
 /// Columns selected for every document read. Kept in sync with `DocumentRow`.
 const SELECT_COLUMNS: &str = "id, title, content, content_hash, tags, metadata, created_at, updated_at";
-
-/// SHA-256 content hash, used for deduplication.
-fn compute_content_hash(content: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(content.as_bytes());
-    hex::encode(hasher.finalize())
-}
 
 #[derive(Debug, Clone)]
 pub struct SqliteRepository {
@@ -107,7 +101,7 @@ impl DatabaseBackend for SqliteRepository {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn get_document(&self, id: Uuid) -> Result<Document, DatabaseError> {
+    async fn get_document(&self, id: Uuid) -> Result<DocumentRow, DatabaseError> {
         let row: Option<DocumentRow> = sqlx::query_as(
             "SELECT id, title, content, content_hash, tags, metadata, created_at, updated_at
              FROM documents WHERE id = ? AND is_deleted = 0",
@@ -118,7 +112,7 @@ impl DatabaseBackend for SqliteRepository {
         .context("Failed to fetch the document.")?;
         let row = row.ok_or_else(|| DatabaseError::NotFound(id.to_string()))?;
 
-        Ok(row.try_into().context("Failed to map the document.")?)
+        Ok(row)
     }
 
     #[tracing::instrument(skip(self, content, tags, metadata))]
@@ -129,7 +123,7 @@ impl DatabaseBackend for SqliteRepository {
         content: Option<&str>,
         tags: Option<&[String]>,
         metadata: Option<&serde_json::Value>,
-    ) -> Result<Document, DatabaseError> {
+    ) -> Result<DocumentRow, DatabaseError> {
         // Partial update: fall back to the existing values for absent fields.
         let existing = self.get_document(id).await?;
 
