@@ -118,6 +118,51 @@ async fn search_with_empty_query_filters_by_tags() {
 }
 
 #[tokio::test]
+async fn search_does_not_panic_on_multibyte_content() {
+    // Regression: `extract_excerpt` sliced at a fixed byte index and panicked
+    // ("end byte index N is not a char boundary") when content held multibyte
+    // UTF-8 characters such as box-drawing `─`. The panicked worker dropped the
+    // connection, surfacing as a fetch failure to clients.
+    let app = spawn_app().await;
+    let wide_line = "─".repeat(60); // 60 × 3-byte chars = 180 bytes
+    seed(
+        &app,
+        &[CreateDocumentRequest {
+            title: "Multibyte doc".into(),
+            content: format!("Tokio runtime notes\n{wide_line}\nend of document"),
+            tags: vec!["rust".into()],
+            metadata: None,
+        }],
+    )
+    .await;
+    let client = reqwest::Client::new();
+
+    let request = SearchRequest {
+        query: "Tokio".to_string(),
+        tags: None,
+        limit: Some(10),
+        offset: Some(0),
+    };
+
+    // Act — previously this hit a 500 / connection drop from the panic.
+    let response = client
+        .post(format!("{}/kb/search", &app.address))
+        .json(&request)
+        .send()
+        .await
+        .unwrap();
+
+    // Assert
+    assert_eq!(response.status(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    let results = body["results"].as_array().unwrap();
+    assert_eq!(results.len(), 1);
+    // The excerpt must be valid UTF-8 (the panic site) and mention the query.
+    let excerpt = results[0]["excerpt"].as_str().unwrap();
+    assert!(excerpt.to_lowercase().contains("tokio"));
+}
+
+#[tokio::test]
 async fn search_get_endpoint_works() {
     // Arrange
     let app = spawn_app().await;

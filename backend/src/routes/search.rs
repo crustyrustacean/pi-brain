@@ -90,8 +90,10 @@ fn extract_excerpt(content: &str, query: &str, max_length: usize) -> String {
     let content_lower = content.to_lowercase();
 
     if let Some(pos) = content_lower.find(&query_lower) {
-        let start = pos.saturating_sub(max_length / 2);
-        let end = (pos + query.len() + max_length / 2).min(content.len());
+        // `pos` is a byte offset; snap both edges to UTF-8 char boundaries so
+        // we never slice into the middle of a multibyte character.
+        let start = content.floor_char_boundary(pos.saturating_sub(max_length / 2));
+        let end = content.ceil_char_boundary((pos + query.len() + max_length / 2).min(content.len()));
 
         let excerpt = &content[start..end];
         let prefix = if start > 0 { "..." } else { "" };
@@ -99,6 +101,8 @@ fn extract_excerpt(content: &str, query: &str, max_length: usize) -> String {
 
         format!("{prefix}{excerpt}{suffix}")
     } else {
-        format!("{}...", &content[..max_length])
+        // No match: take the leading run, ending on a char boundary.
+        let end = content.ceil_char_boundary(max_length);
+        format!("{}...", &content[..end])
     }
 }
