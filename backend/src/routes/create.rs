@@ -9,8 +9,8 @@ use actix_web::web::{Data, Json};
 use chrono::Utc;
 use uuid::Uuid;
 
-/// POST /kb/documents — create a new document.
-#[actix_web::post("/kb/documents")]
+/// POST /pb/documents — create a new document.
+#[actix_web::post("/pb/documents")]
 pub async fn create_document(
     database: Data<Box<dyn DatabaseBackend>>,
     request: Json<CreateDocumentRequest>,

@@ -1,3 +1,3 @@
 [[proxy]]
-rewrite = "/kb/"
-backend = "http://localhost:8000/kb/"
+rewrite = "/pb/"
+backend = "http://localhost:8000/pb/"

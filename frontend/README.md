@@ -97,13 +97,13 @@ Then access the application at `http://localhost:8000`
 
 The frontend communicates with the backend via REST API:
 
-- `GET /kb/documents` - List documents
-- `GET /kb/documents/{id}` - Get document
-- `POST /kb/documents` - Create document
-- `PUT /kb/documents/{id}` - Update document
-- `DELETE /kb/documents/{id}` - Delete document
-- `POST /kb/search` - Search documents
-- `GET /kb/stats` - Get statistics
+- `GET /pb/documents` - List documents
+- `GET /pb/documents/{id}` - Get document
+- `POST /pb/documents` - Create document
+- `PUT /pb/documents/{id}` - Update document
+- `DELETE /pb/documents/{id}` - Delete document
+- `POST /pb/search` - Search documents
+- `GET /pb/stats` - Get statistics
 
 ## Styling
 

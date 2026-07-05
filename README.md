@@ -31,23 +31,23 @@ pi-brain/
 
 ## API
 
-All data endpoints are under `/kb/`.
+All data endpoints are under `/pb/`.
 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health_check` | Liveness probe |
-| POST | `/kb/documents` | Create a document |
-| GET | `/kb/documents` | List documents (paginated) |
-| GET | `/kb/documents/{id}` | Get a document by UUID |
-| PUT | `/kb/documents/{id}` | Update a document |
-| DELETE | `/kb/documents/{id}` | Soft-delete a document |
-| POST | `/kb/search` | Full-text search (body) |
-| GET | `/kb/search?q=` | Full-text search (query params) |
-| GET | `/kb/stats` | Knowledge base statistics |
-| GET | `/kb/endpoints` | API discovery (machine-readable) |
+| POST | `/pb/documents` | Create a document |
+| GET | `/pb/documents` | List documents (paginated) |
+| GET | `/pb/documents/{id}` | Get a document by UUID |
+| PUT | `/pb/documents/{id}` | Update a document |
+| DELETE | `/pb/documents/{id}` | Soft-delete a document |
+| POST | `/pb/search` | Full-text search (body) |
+| GET | `/pb/search?q=` | Full-text search (query params) |
+| GET | `/pb/stats` | Knowledge base statistics |
+| GET | `/pb/endpoints` | API discovery (machine-readable) |
 
 Responses are **bare JSON** — the entity (or DTO) is returned directly, with no
-envelope wrapper. For example, `GET /kb/documents/{id}` returns the document:
+envelope wrapper. For example, `GET /pb/documents/{id}` returns the document:
 
 ```json
 {
@@ -102,7 +102,7 @@ The service listens on port 8000 by default:
 | URL | Serves |
 |-----|--------|
 | `http://localhost:8000/` | Frontend SPA |
-| `http://localhost:8000/kb/*` | REST API |
+| `http://localhost:8000/pb/*` | REST API |
 
 ## Configuration
 
@@ -132,7 +132,7 @@ cd frontend
 trunk serve          # Dev server with HMR at http://localhost:8080
 ```
 
-Trunk proxies `/kb/*` requests to the backend at `http://localhost:8000` (see `Trunk.toml`).
+Trunk proxies `/pb/*` requests to the backend at `http://localhost:8000` (see `Trunk.toml`).
 
 ## systemd Service
 

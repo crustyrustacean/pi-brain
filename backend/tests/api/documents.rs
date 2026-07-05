@@ -26,7 +26,7 @@ async fn create_document_returns_200_with_document() {
 
     // Act
     let response = client
-        .post(format!("{}/kb/documents", &app.address))
+        .post(format!("{}/pb/documents", &app.address))
         .json(&request)
         .send()
         .await
@@ -75,7 +75,7 @@ async fn create_document_deduplicates_content() {
 
     // Act — create the first document.
     let body1: serde_json::Value = client
-        .post(format!("{}/kb/documents", &app.address))
+        .post(format!("{}/pb/documents", &app.address))
         .json(&request)
         .send()
         .await
@@ -91,7 +91,7 @@ async fn create_document_deduplicates_content() {
     second.tags = vec!["duplicate".to_string()];
 
     let body2: serde_json::Value = client
-        .post(format!("{}/kb/documents", &app.address))
+        .post(format!("{}/pb/documents", &app.address))
         .json(&second)
         .send()
         .await
@@ -118,7 +118,7 @@ async fn get_document_returns_document_for_valid_id() {
         metadata: None,
     };
     let created: serde_json::Value = client
-        .post(format!("{}/kb/documents", &app.address))
+        .post(format!("{}/pb/documents", &app.address))
         .json(&request)
         .send()
         .await
@@ -130,7 +130,7 @@ async fn get_document_returns_document_for_valid_id() {
 
     // Act
     let body: serde_json::Value = client
-        .get(format!("{}/kb/documents/{}", &app.address, id))
+        .get(format!("{}/pb/documents/{}", &app.address, id))
         .send()
         .await
         .unwrap()
@@ -152,7 +152,7 @@ async fn get_document_returns_404_for_nonexistent_id() {
 
     // Act
     let response = client
-        .get(format!("{}/kb/documents/{}", &app.address, missing))
+        .get(format!("{}/pb/documents/{}", &app.address, missing))
         .send()
         .await
         .expect("Failed to execute request.");
@@ -174,7 +174,7 @@ async fn update_document_applies_partial_changes() {
         metadata: None,
     };
     let created: serde_json::Value = client
-        .post(format!("{}/kb/documents", &app.address))
+        .post(format!("{}/pb/documents", &app.address))
         .json(&create)
         .send()
         .await
@@ -193,7 +193,7 @@ async fn update_document_applies_partial_changes() {
 
     // Act
     let body: serde_json::Value = client
-        .put(format!("{}/kb/documents/{}", &app.address, id))
+        .put(format!("{}/pb/documents/{}", &app.address, id))
         .json(&update)
         .send()
         .await
@@ -222,7 +222,7 @@ async fn delete_document_soft_deletes_then_hides_it() {
         metadata: None,
     };
     let created: serde_json::Value = client
-        .post(format!("{}/kb/documents", &app.address))
+        .post(format!("{}/pb/documents", &app.address))
         .json(&create)
         .send()
         .await
@@ -234,7 +234,7 @@ async fn delete_document_soft_deletes_then_hides_it() {
 
     // Act — soft-delete.
     let delete_response = client
-        .delete(format!("{}/kb/documents/{}", &app.address, id))
+        .delete(format!("{}/pb/documents/{}", &app.address, id))
         .send()
         .await
         .unwrap();
@@ -242,7 +242,7 @@ async fn delete_document_soft_deletes_then_hides_it() {
 
     // Assert — the document is no longer retrievable.
     let get_response = client
-        .get(format!("{}/kb/documents/{}", &app.address, id))
+        .get(format!("{}/pb/documents/{}", &app.address, id))
         .send()
         .await
         .unwrap();
@@ -263,7 +263,7 @@ async fn list_documents_returns_paginated_results() {
             metadata: None,
         };
         client
-            .post(format!("{}/kb/documents", &app.address))
+            .post(format!("{}/pb/documents", &app.address))
             .json(&request)
             .send()
             .await
@@ -272,7 +272,7 @@ async fn list_documents_returns_paginated_results() {
 
     // Act
     let body: serde_json::Value = client
-        .get(format!("{}/kb/documents?limit=2&offset=0", &app.address))
+        .get(format!("{}/pb/documents?limit=2&offset=0", &app.address))
         .send()
         .await
         .unwrap()

@@ -8,8 +8,8 @@ use actix_web::web::{Data, Path};
 use pi_brain_shared::Document;
 use uuid::Uuid;
 
-/// GET /kb/documents/{id} — get a single document by UUID.
-#[actix_web::get("/kb/documents/{id}")]
+/// GET /pb/documents/{id} — get a single document by UUID.
+#[actix_web::get("/pb/documents/{id}")]
 pub async fn get_document(
     path: Path<String>,
     database: Data<Box<dyn DatabaseBackend>>,

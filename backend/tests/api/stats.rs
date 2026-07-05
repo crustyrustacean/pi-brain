@@ -10,7 +10,7 @@ async fn get_stats_returns_initial_zero_state() {
 
     // Act
     let body: serde_json::Value = client
-        .get(format!("{}/kb/stats", &app.address))
+        .get(format!("{}/pb/stats", &app.address))
         .send()
         .await
         .unwrap()
@@ -40,7 +40,7 @@ async fn get_stats_counts_documents_correctly() {
             metadata: None,
         };
         client
-            .post(format!("{}/kb/documents", &app.address))
+            .post(format!("{}/pb/documents", &app.address))
             .json(&request)
             .send()
             .await
@@ -49,7 +49,7 @@ async fn get_stats_counts_documents_correctly() {
 
     // Act
     let body: serde_json::Value = client
-        .get(format!("{}/kb/stats", &app.address))
+        .get(format!("{}/pb/stats", &app.address))
         .send()
         .await
         .unwrap()

@@ -6,8 +6,8 @@ use crate::utils::e500;
 use actix_web::HttpResponse;
 use actix_web::web::Data;
 
-/// GET /kb/stats — knowledge base statistics.
-#[actix_web::get("/kb/stats")]
+/// GET /pb/stats — knowledge base statistics.
+#[actix_web::get("/pb/stats")]
 pub async fn get_stats(
     database: Data<Box<dyn DatabaseBackend>>,
 ) -> Result<HttpResponse, actix_web::Error> {

@@ -41,7 +41,7 @@ impl ApiClient {
         offset: usize,
     ) -> Result<DocumentListResponse, ApiError> {
         let response =
-            Request::get(&self.url(&format!("/kb/documents?limit={}&offset={}", limit, offset)))
+            Request::get(&self.url(&format!("/pb/documents?limit={}&offset={}", limit, offset)))
                 .send()
                 .await
                 .map_err(|e| ApiError::Network(e.to_string()))?;
@@ -51,7 +51,7 @@ impl ApiClient {
 
     #[allow(dead_code)]
     pub async fn get_document(&self, id: &uuid::Uuid) -> Result<Document, ApiError> {
-        let response = Request::get(&self.url(&format!("/kb/documents/{}", id)))
+        let response = Request::get(&self.url(&format!("/pb/documents/{}", id)))
             .send()
             .await
             .map_err(|e| ApiError::Network(e.to_string()))?;
@@ -60,7 +60,7 @@ impl ApiClient {
     }
 
     pub async fn create_document(&self, req: &CreateDocumentRequest) -> Result<Document, ApiError> {
-        let response = Request::post(&self.url("/kb/documents"))
+        let response = Request::post(&self.url("/pb/documents"))
             .json(req)
             .map_err(|e| ApiError::Network(e.to_string()))?
             .send()
@@ -75,7 +75,7 @@ impl ApiClient {
         id: &uuid::Uuid,
         req: &UpdateDocumentRequest,
     ) -> Result<Document, ApiError> {
-        let response = Request::put(&self.url(&format!("/kb/documents/{}", id)))
+        let response = Request::put(&self.url(&format!("/pb/documents/{}", id)))
             .json(req)
             .map_err(|e| ApiError::Network(e.to_string()))?
             .send()
@@ -86,7 +86,7 @@ impl ApiClient {
     }
 
     pub async fn delete_document(&self, id: &uuid::Uuid) -> Result<(), ApiError> {
-        let response = Request::delete(&self.url(&format!("/kb/documents/{}", id)))
+        let response = Request::delete(&self.url(&format!("/pb/documents/{}", id)))
             .send()
             .await
             .map_err(|e| ApiError::Network(e.to_string()))?;
@@ -100,7 +100,7 @@ impl ApiClient {
     // ---- Search ----
 
     pub async fn search_documents(&self, req: &SearchRequest) -> Result<SearchResponse, ApiError> {
-        let response = Request::post(&self.url("/kb/search"))
+        let response = Request::post(&self.url("/pb/search"))
             .json(req)
             .map_err(|e| ApiError::Network(e.to_string()))?
             .send()
@@ -113,7 +113,7 @@ impl ApiClient {
     // ---- Stats ----
 
     pub async fn get_stats(&self) -> Result<PiBrainStats, ApiError> {
-        let response = Request::get(&self.url("/kb/stats"))
+        let response = Request::get(&self.url("/pb/stats"))
             .send()
             .await
             .map_err(|e| ApiError::Network(e.to_string()))?;

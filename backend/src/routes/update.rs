@@ -9,8 +9,8 @@ use actix_web::web::{Data, Json, Path};
 use chrono::Utc;
 use uuid::Uuid;
 
-/// PUT /kb/documents/{id} — update an existing document. Only supplied fields change.
-#[actix_web::put("/kb/documents/{id}")]
+/// PUT /pb/documents/{id} — update an existing document. Only supplied fields change.
+#[actix_web::put("/pb/documents/{id}")]
 pub async fn update_document(
     path: Path<String>,
     database: Data<Box<dyn DatabaseBackend>>,

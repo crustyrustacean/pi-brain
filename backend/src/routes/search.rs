@@ -46,8 +46,8 @@ async fn perform_search(
     }))
 }
 
-/// POST /kb/search — full-text search across documents.
-#[actix_web::post("/kb/search")]
+/// POST /pb/search — full-text search across documents.
+#[actix_web::post("/pb/search")]
 pub async fn search_documents(
     database: Data<Box<dyn DatabaseBackend>>,
     request: Json<SearchRequest>,
@@ -65,8 +65,8 @@ struct SearchQuery {
     offset: Option<usize>,
 }
 
-/// GET /kb/search — full-text search via query parameters.
-#[actix_web::get("/kb/search")]
+/// GET /pb/search — full-text search via query parameters.
+#[actix_web::get("/pb/search")]
 pub async fn search_get(
     database: Data<Box<dyn DatabaseBackend>>,
     query: Query<SearchQuery>,

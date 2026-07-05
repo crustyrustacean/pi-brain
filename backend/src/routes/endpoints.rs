@@ -44,20 +44,20 @@ pub struct EndpointsResponse {
     pub name: String,
     /// API version string.
     pub version: String,
-    /// Base URL all paths are relative to (e.g. "/kb").
+    /// Base URL all paths are relative to (e.g. "/pb").
     pub base: String,
     /// List of available endpoints.
     pub endpoints: Vec<EndpointDescription>,
 }
 
-/// GET /kb/endpoints — returns all advertised endpoints.
+/// GET /pb/endpoints — returns all advertised endpoints.
 pub async fn get_endpoints() -> impl Responder {
     let endpoints = build_endpoint_list();
 
     HttpResponse::Ok().json(EndpointsResponse {
         name: "pi-brain".into(),
         version: env!("CARGO_PKG_VERSION").into(),
-        base: "/kb".into(),
+        base: "/pb".into(),
         endpoints,
     })
 }
@@ -67,7 +67,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         // ---- Health ----
         EndpointDescription {
             method: "GET".into(),
-            path: "/health_check".into(),
+            path: "/pb/health_check".into(),
             description: "Health check — confirms the API service is running.".into(),
             parameters: vec![],
             example_body: None,
@@ -75,7 +75,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         // ---- Documents ----
         EndpointDescription {
             method: "POST".into(),
-            path: "/kb/documents".into(),
+            path: "/pb/documents".into(),
             description: "Create a new document.".into(),
             parameters: vec![
                 ParameterDescription {
@@ -112,7 +112,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         },
         EndpointDescription {
             method: "GET".into(),
-            path: "/kb/documents".into(),
+            path: "/pb/documents".into(),
             description: "List all documents with pagination.".into(),
             parameters: vec![
                 ParameterDescription {
@@ -132,7 +132,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         },
         EndpointDescription {
             method: "GET".into(),
-            path: "/kb/documents/{id}".into(),
+            path: "/pb/documents/{id}".into(),
             description: "Get a single document by UUID.".into(),
             parameters: vec![ParameterDescription {
                 name: "id".into(),
@@ -144,7 +144,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         },
         EndpointDescription {
             method: "PUT".into(),
-            path: "/kb/documents/{id}".into(),
+            path: "/pb/documents/{id}".into(),
             description: "Update an existing document. Only supplied fields are changed.".into(),
             parameters: vec![
                 ParameterDescription {
@@ -184,7 +184,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         },
         EndpointDescription {
             method: "DELETE".into(),
-            path: "/kb/documents/{id}".into(),
+            path: "/pb/documents/{id}".into(),
             description: "Soft-delete a document.".into(),
             parameters: vec![ParameterDescription {
                 name: "id".into(),
@@ -197,7 +197,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         // ---- Search ----
         EndpointDescription {
             method: "POST".into(),
-            path: "/kb/search".into(),
+            path: "/pb/search".into(),
             description: "Full-text search across documents. Returns ranked results with excerpts."
                 .into(),
             parameters: vec![
@@ -234,7 +234,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         },
         EndpointDescription {
             method: "GET".into(),
-            path: "/kb/search".into(),
+            path: "/pb/search".into(),
             description: "Full-text search via GET query parameters (simpler but less expressive)."
                 .into(),
             parameters: vec![
@@ -262,7 +262,7 @@ fn build_endpoint_list() -> Vec<EndpointDescription> {
         // ---- Stats ----
         EndpointDescription {
             method: "GET".into(),
-            path: "/kb/stats".into(),
+            path: "/pb/stats".into(),
             description:
                 "Get knowledge base statistics (document count, unique tags, DB size, etc.).".into(),
             parameters: vec![],

@@ -8,8 +8,8 @@ use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use uuid::Uuid;
 
-/// DELETE /kb/documents/{id} — soft-delete a document.
-#[actix_web::delete("/kb/documents/{id}")]
+/// DELETE /pb/documents/{id} — soft-delete a document.
+#[actix_web::delete("/pb/documents/{id}")]
 pub async fn delete_document(
     path: Path<String>,
     database: Data<Box<dyn DatabaseBackend>>,

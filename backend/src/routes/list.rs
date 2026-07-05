@@ -16,8 +16,8 @@ struct ListQuery {
     offset: Option<usize>,
 }
 
-/// GET /kb/documents — list all documents with pagination.
-#[actix_web::get("/kb/documents")]
+/// GET /pb/documents — list all documents with pagination.
+#[actix_web::get("/pb/documents")]
 pub async fn list_documents(
     database: Data<Box<dyn DatabaseBackend>>,
     query: Query<ListQuery>,
