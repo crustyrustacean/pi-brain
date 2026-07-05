@@ -6,7 +6,7 @@ async fn seed(app: &crate::helpers::TestApp, docs: &[CreateDocumentRequest]) {
     let client = reqwest::Client::new();
     for doc in docs {
         client
-            .post(format!("{}/kb/documents", app.address))
+            .post(format!("{}/pb/documents", app.address))
             .json(doc)
             .send()
             .await
@@ -49,7 +49,7 @@ async fn search_returns_matching_documents() {
 
     // Act
     let body: serde_json::Value = client
-        .post(format!("{}/kb/search", &app.address))
+        .post(format!("{}/pb/search", &app.address))
         .json(&request)
         .send()
         .await
@@ -101,7 +101,7 @@ async fn search_with_empty_query_filters_by_tags() {
 
     // Act
     let body: serde_json::Value = client
-        .post(format!("{}/kb/search", &app.address))
+        .post(format!("{}/pb/search", &app.address))
         .json(&request)
         .send()
         .await
@@ -146,7 +146,7 @@ async fn search_does_not_panic_on_multibyte_content() {
 
     // Act — previously this hit a 500 / connection drop from the panic.
     let response = client
-        .post(format!("{}/kb/search", &app.address))
+        .post(format!("{}/pb/search", &app.address))
         .json(&request)
         .send()
         .await
@@ -160,6 +160,93 @@ async fn search_does_not_panic_on_multibyte_content() {
     // The excerpt must be valid UTF-8 (the panic site) and mention the query.
     let excerpt = results[0]["excerpt"].as_str().unwrap();
     assert!(excerpt.to_lowercase().contains("tokio"));
+}
+
+#[tokio::test]
+async fn search_handles_fts_special_characters_without_500() {
+    // Regression: a raw query like `pi-rpc session persistence` was bound
+    // straight into a `documents_fts MATCH ?` expression. FTS5's query parser
+    // interpreted the hyphenated token as a column reference and failed with
+    // `no such column: rpc` -> HTTP 500. The query is now sanitized (each
+    // whitespace token double-quoted) so all FTS5 special characters are
+    // treated as literals.
+    let app = spawn_app().await;
+    seed(
+        &app,
+        &[CreateDocumentRequest {
+            title: "pi-rpc session notes".into(),
+            content:
+                "The pi-rpc service maintains session state for persistence across reconnects."
+                    .into(),
+            tags: vec!["infra".into()],
+            metadata: None,
+        }],
+    )
+    .await;
+    let client = reqwest::Client::new();
+
+    let request = SearchRequest {
+        query: "pi-rpc session persistence".to_string(),
+        tags: None,
+        limit: Some(10),
+        offset: Some(0),
+    };
+
+    // Act -- previously this returned 500 (`no such column: rpc`).
+    let response = client
+        .post(format!("{}/pb/search", &app.address))
+        .json(&request)
+        .send()
+        .await
+        .unwrap();
+
+    // Assert
+    assert_eq!(response.status(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    let results = body["results"].as_array().unwrap();
+    // All three quoted tokens (pi-rpc, session, persistence) are present in
+    // the seeded content, so the AND matches exactly one document.
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0]["document"]["title"], "pi-rpc session notes");
+}
+
+#[tokio::test]
+async fn search_treats_punctuation_only_query_as_empty() {
+    // A query that sanitizes down to no real tokens (e.g. a lone hyphen or
+    // asterisk) must not produce a malformed FTS5 expression, and must skip
+    // the FTS clause entirely rather than 500.
+    let app = spawn_app().await;
+    seed(
+        &app,
+        &[CreateDocumentRequest {
+            title: "Punct target".into(),
+            content: "Some content here.".into(),
+            tags: vec!["misc".into()],
+            metadata: None,
+        }],
+    )
+    .await;
+    let client = reqwest::Client::new();
+
+    let request = SearchRequest {
+        query: "-*-".to_string(),
+        tags: None,
+        limit: Some(10),
+        offset: Some(0),
+    };
+
+    let response = client
+        .post(format!("{}/pb/search", &app.address))
+        .json(&request)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    // FTS clause skipped (empty sanitized query) -> every non-deleted doc is
+    // returned, unordered by relevance.
+    assert!(!body["results"].as_array().unwrap().is_empty());
 }
 
 #[tokio::test]
@@ -180,7 +267,7 @@ async fn search_get_endpoint_works() {
 
     // Act
     let body: serde_json::Value = client
-        .get(format!("{}/kb/search?q=test&limit=10", &app.address))
+        .get(format!("{}/pb/search?q=test&limit=10", &app.address))
         .send()
         .await
         .unwrap()

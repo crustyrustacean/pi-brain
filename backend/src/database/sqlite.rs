@@ -15,6 +15,37 @@ use uuid::Uuid;
 const SELECT_COLUMNS: &str =
     "id, title, content, content_hash, tags, metadata, created_at, updated_at";
 
+/// Build a safe FTS5 MATCH expression from arbitrary user input.
+///
+/// The raw query is split on whitespace and each token is wrapped as a
+/// double-quoted FTS5 phrase (any embedded `"` is doubled to escape). This
+/// neutralizes FTS5 query-syntax special characters — `-`, `:`, `*`, `"`,
+/// `()` — that would otherwise be interpreted by the FTS5 query parser.
+///
+/// Concrete bug this fixes: a bare query like `pi-rpc session persistence`
+/// was bound straight into `documents_fts MATCH ?`, where FTS5 parsed the
+/// hyphenated token and surfaced `no such column: rpc` (HTTP 500). Each
+/// quoted token is still run through the table tokenizer at match time, so
+/// `pi-rpc` matches content holding `pi` and `rpc` adjacently; tokens are
+/// implicitly AND-ed, preserving the original search intent.
+///
+/// Returns an empty string for blank / whitespace-only / punctuation-only
+/// input (tokens with no alphanumeric characters are dropped); the caller
+/// uses that to skip the FTS clause entirely.
+fn build_fts_query(query: &str) -> String {
+    query
+        .split_whitespace()
+        // Drop tokens that hold no searchable text: a punctuation-only token
+        // (e.g. `-`, `-*-`, `*`) would survive quoting but FTS5 tokenizes it
+        // to nothing, so it can never match. Dropping it keeps punctuation-
+        // only queries equivalent to empty (skip FTS, return all) and avoids
+        // confusing zero-result searches.
+        .filter(|tok| tok.chars().any(|c| c.is_alphanumeric()))
+        .map(|tok| format!("\"{}\"", tok.replace('"', "\"\"")))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 #[derive(Debug, Clone)]
 pub struct SqliteRepository {
     pool: SqlitePool,
@@ -169,13 +200,14 @@ impl DatabaseBackend for SqliteRepository {
         offset: usize,
     ) -> Result<(Vec<Document>, i64), DatabaseError> {
         let tag_list = tags.filter(|t| !t.is_empty());
+        let fts_query = build_fts_query(query);
 
         // --- total match count (for pagination metadata) ---
         let mut count: QueryBuilder<sqlx::Sqlite> =
             QueryBuilder::new("SELECT COUNT(*) FROM documents WHERE is_deleted = 0");
-        if !query.is_empty() {
+        if !fts_query.is_empty() {
             count.push(" AND id IN (SELECT id FROM documents_fts WHERE documents_fts MATCH ");
-            count.push_bind(query.to_string());
+            count.push_bind(fts_query.clone());
             count.push(")");
         }
         if let Some(tags) = tag_list {
@@ -194,9 +226,9 @@ impl DatabaseBackend for SqliteRepository {
         let mut rows: QueryBuilder<sqlx::Sqlite> = QueryBuilder::new("SELECT ");
         rows.push(SELECT_COLUMNS);
         rows.push(" FROM documents WHERE is_deleted = 0");
-        if !query.is_empty() {
+        if !fts_query.is_empty() {
             rows.push(" AND id IN (SELECT id FROM documents_fts WHERE documents_fts MATCH ");
-            rows.push_bind(query.to_string());
+            rows.push_bind(fts_query);
             rows.push(")");
         }
         if let Some(tags) = tag_list {
