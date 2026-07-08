@@ -5,6 +5,17 @@ use crate::hooks::use_modal::ModalType;
 use pi_brain_shared::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 use yew::prelude::*;
 
+/// Parse a markdown string into HTML using pulldown-cmark.
+/// Tables and strikethrough are enabled for richer rendering.
+fn render_markdown(content: &str) -> String {
+    use pulldown_cmark::{Parser, Options, html};
+    let options = Options::ENABLE_TABLES | Options::ENABLE_STRIKETHROUGH;
+    let parser = Parser::new_ext(content, options);
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, parser);
+    html_output
+}
+
 #[derive(Properties, Clone)]
 pub struct DocumentModalProps {
     pub modal_type: Option<ModalType>,
@@ -158,7 +169,7 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
                             </div>
                             <div class="form-group">
                                 <label>{"Content"}</label>
-                                <div style="white-space: pre-wrap;">{&doc.content}</div>
+                                <div class="markdown-content">{Html::from_html_unchecked(AttrValue::from(render_markdown(&doc.content)))}</div>
                             </div>
                             <div class="form-group">
                                 <label>{"Tags"}</label>
