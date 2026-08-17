@@ -1,6 +1,7 @@
 // src/pages/home_page.rs
 
 use crate::components::*;
+use crate::components::document_modal::DELETE_CONFIRM;
 use crate::hooks::use_modal::ModalType;
 use crate::hooks::{use_documents, use_modal, use_search, use_stats};
 use yew::prelude::*;
@@ -61,37 +62,29 @@ pub fn home_page() -> Html {
         })
     };
 
-    let _on_edit_document = {
+    let on_edit_document = {
         let modal_handle = modal_handle.clone();
-        let current_document = current_document.clone();
 
-        Callback::from(move |_: yew::MouseEvent| {
-            if let Some(doc) = (*current_document).clone() {
-                modal_handle
-                    .open_modal
-                    .emit(ModalType::EditDocument(doc.id));
-            }
+        Callback::from(move |id: uuid::Uuid| {
+            modal_handle.open_modal.emit(ModalType::EditDocument(id));
         })
     };
 
-    let _on_delete_document = {
+    let on_delete_document = {
         let documents_handle = documents_handle.clone();
         let modal_handle = modal_handle.clone();
         let current_document = current_document.clone();
 
-        Callback::from(move |_: yew::MouseEvent| {
-            if let Some(_doc) = (*current_document).clone() {
-                let confirmed = web_sys::window()
-                    .expect("no global `window` exists")
-                    .confirm()
-                    .unwrap_or(false);
+        Callback::from(move |id: uuid::Uuid| {
+            let confirmed = web_sys::window()
+                .expect("no global `window` exists")
+                .confirm_with_message(DELETE_CONFIRM)
+                .unwrap_or(false);
 
-                if confirmed {
-                    if let Some(doc) = (*current_document).clone() {
-                        documents_handle.delete_document.emit(doc.id);
-                    }
-                    modal_handle.close_modal.emit(());
-                }
+            if confirmed {
+                documents_handle.delete_document.emit(id);
+                modal_handle.close_modal.emit(());
+                current_document.set(None);
             }
         })
     };
@@ -184,6 +177,8 @@ pub fn home_page() -> Html {
                 documents_handle={documents_handle.clone()}
                 on_close={on_close_modal}
                 current_document={(*current_document).clone()}
+                on_edit_document={on_edit_document}
+                on_delete_document={on_delete_document}
             />
         </>
     }

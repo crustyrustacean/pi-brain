@@ -5,6 +5,9 @@ use crate::hooks::use_modal::ModalType;
 use pi_brain_shared::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 use yew::prelude::*;
 
+/// Confirmation message shown before deleting a document.
+pub const DELETE_CONFIRM: &str = "Delete this document? This cannot be undone.";
+
 /// Parse a markdown string into HTML using pulldown-cmark.
 /// Tables and strikethrough are enabled for richer rendering.
 fn render_markdown(content: &str) -> String {
@@ -22,6 +25,8 @@ pub struct DocumentModalProps {
     pub documents_handle: UseDocumentsHandle,
     pub on_close: Callback<()>,
     pub current_document: Option<Document>,
+    pub on_edit_document: Callback<uuid::Uuid>,
+    pub on_delete_document: Callback<uuid::Uuid>,
 }
 
 impl PartialEq for DocumentModalProps {
@@ -139,6 +144,28 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
 
     let on_close_click_clone = on_close_click.clone();
 
+    let on_edit_click = {
+        let on_edit_document = props.on_edit_document.clone();
+        let current_document = props.current_document.clone();
+
+        Callback::from(move |_: yew::MouseEvent| {
+            if let Some(doc) = &current_document {
+                on_edit_document.emit(doc.id);
+            }
+        })
+    };
+
+    let on_delete_click = {
+        let on_delete_document = props.on_delete_document.clone();
+        let current_document = props.current_document.clone();
+
+        Callback::from(move |_: yew::MouseEvent| {
+            if let Some(doc) = &current_document {
+                on_delete_document.emit(doc.id);
+            }
+        })
+    };
+
     let modal_title = match &props.modal_type {
         Some(ModalType::CreateDocument) => "Create Document",
         Some(ModalType::EditDocument(_)) => "Edit Document",
@@ -180,7 +207,9 @@ pub fn document_modal(props: &DocumentModalProps) -> Html {
                                 </div>
                             </div>
                             <div class="modal-actions">
+                                <button class="btn btn-danger" onclick={on_delete_click}>{"Delete"}</button>
                                 <button class="btn btn-secondary" onclick={on_close_click_clone.clone()}>{"Close"}</button>
+                                <button class="btn btn-primary" onclick={on_edit_click}>{"Edit"}</button>
                             </div>
                         </div>
                     } else {
