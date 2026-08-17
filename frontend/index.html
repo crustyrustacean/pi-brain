@@ -2,13 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2c3e50">
     <title>pi-brain</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100%;
         }
         
         body {
@@ -21,6 +26,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
         }
         
         header {
@@ -42,6 +49,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: background-color 0.2s;
+            touch-action: manipulation;
         }
         
         .btn-primary {
@@ -105,10 +113,12 @@
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
         
         .search-bar input {
-            flex: 1;
+            flex: 1 1 12rem;
+            min-width: 0;
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -144,6 +154,7 @@
             color: #666;
             line-height: 1.6;
             margin-bottom: 1rem;
+            overflow-wrap: break-word;
         }
         
         .document-meta {
@@ -268,6 +279,7 @@
         .markdown-content {
             line-height: 1.7;
             color: #333;
+            overflow-wrap: break-word;
         }
         
         .markdown-content h1 {
@@ -347,6 +359,8 @@
             width: 100%;
             margin: 0.75rem 0;
             font-size: 0.9rem;
+            display: block;
+            overflow-x: auto;
         }
         
         .markdown-content th, .markdown-content td {
@@ -381,6 +395,109 @@
         
         .markdown-content em {
             font-style: italic;
+        }
+        
+        /* ── Responsive / mobile ─────────────────────────── */
+        
+        /* Comfortable touch targets on phones and tablets. */
+        @media (pointer: coarse) {
+            .btn {
+                min-height: 44px;
+                padding: 0.65rem 1.1rem;
+            }
+            
+            .close-btn {
+                min-width: 44px;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .tag {
+                padding: 0.35rem 0.65rem;
+            }
+        }
+        
+        /* Small screens: tighten spacing, two-up stats, full-screen modal. */
+        @media (max-width: 640px) {
+            .container {
+                padding: 12px;
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+            
+            header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.6rem;
+            }
+            
+            .document-item {
+                padding: 1rem;
+            }
+            
+            .document-title {
+                font-size: 1.05rem;
+            }
+            
+            .document-list {
+                gap: 0.75rem;
+            }
+            
+            /* Modal becomes a full-screen sheet. */
+            .modal-overlay {
+                align-items: stretch;
+                padding: 0;
+            }
+            
+            .modal {
+                width: 100%;
+                max-width: 100%;
+                height: 100vh;
+                height: 100dvh;
+                max-height: 100vh;
+                max-height: 100dvh;
+                border-radius: 0;
+                padding: 1rem;
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+                overscroll-behavior: contain;
+            }
+            
+            .modal-title {
+                font-size: 1.25rem;
+            }
+            
+            .modal-actions {
+                flex-wrap: wrap;
+            }
+            
+            .modal-actions .btn {
+                flex: 1 1 auto;
+            }
+        }
+        
+        /* Very narrow phones: stack the search button under the input. */
+        @media (max-width: 380px) {
+            .search-bar input {
+                flex-basis: 100%;
+            }
+            
+            .search-bar .btn {
+                flex: 1;
+            }
         }
     </style>
 </head>
